@@ -1,0 +1,6 @@
+IAM
+EC2 - EBS
+EFS
+Recycle Bin
+Route 53 - Health Checks - Traffic Policy
+

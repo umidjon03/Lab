@@ -1,0 +1,19 @@
+Test accounts:
+email
+umidshukhratovaws[1:10]@gmail.com
+
+acc name
+umid-shukh-[1:10]
+
+pass
+welcome2024!
+
+
+  To log in remote instance by local linux
+- umidjon@nba-082-01a-UZ:~/Documents/AWS$ chmod 0400 alinux.pem
+- umidjon@nba-082-01a-UZ:~/Documents/AWS$ ssh -i alinux.pem ec2-user@54.163.32.5
+$ ping google.com
+$ netstat -n
+$ sudo su  - to act as a sudo forever
+$ nslookup google.com - to get ip by domain name
+$ dig google.com      - to get ip by domain name

@@ -1,0 +1,213 @@
+`DESC TABLE <table name>` - Gives all describtions about the table
+
+`SHOW LOCKS`              - SHows queries holding and waiting (queque)
+
+`SELECT SYSTEM$CANCEL_QUERY(<query id>)` - We can get query id by the above query
+
+`SELECT SYSTEM$CANCEL_ALL_QUERY(<session id>)` - cancels all queries in a session
+
+`SHOW transactions IN <session id or user>` - to show all transactions from specific session or user
+
+`SHOW PARAMETERS`         - Shows all parameters (for example we can see lock timeout period by selecting key = LOCK_TIMEOUT row)
+
+/*
+ACID: (Atomic, Consistency, Isolation, and Durability) 
+`BEGIN Transaction <Transaction Name>`
+
+<Transaction query>
+
+`ROLLBACK`                 - rollback the transaction before applying to data storage
+`COMMIT`                   - Commits the change to data storage
+
+`SELECT current_transaction()`  - gives the starting time of the current transaction
+
+*/
+
+`ALTER TABLE <table name> ADD SEARCH OPTIMIZATION ON EQUALITY(<col name>)` - Adds SOS to table
+
+
+-- SNOW SQL
+curl -O https://sfc-repo.snowflakecomputing.com/snowsql/bootstrap/1.2/linux_x86_64/snowsql-1.2.9-linux_x86_64.bash
+SNOWSQL_DEST=~/bin SNOWSQL_LOGIN_SHELL=~/.profile bash snowsql-1.2.9-linux_x86_64.bash
+
+umidjon@nba-082-01a-UZ:~/Downloads/usr/bin$ ./snowsql -a ijb60419.us-east-1
+
+
+
+
+
+
+
+
+AWS CLI:
+umidjon@nba-082-01a-UZ:~$ aws configure
+
+umidjon@nba-082-01a-UZ:~$ aws s3 ls s3://snowflake-mejohn/unload/
+
+umidjon@nba-082-01a-UZ:~$ aws s3 ls s3://snowflake-mejohn/unload/ --recursive
+
+-- to download object from s3
+umidjon@nba-082-01a-UZ:~/Documents/Snowflake$ aws s3 cp s3://snowflake-mejohn/unload/ ./awscopy/ --recursive
+
+-- Or vice versa
+umidjon@nba-082-01a-UZ:~/Documents/Snowflake$   aws s3 cp ./awscopy/ s3://snowflake-mejohn/upload_by_cli/ --recursive
+
+
+
+LINUX CLI:
+$ split -b 50000000 train.csv train_split/train_  -- splits train.csv into peaces into train_split folder w/ train_ prefix
+$ head -100 train.csv >> sample_train.csv         -- copy top 100 row   
+
+
+    Objects in Snowflake:
+Table [transient, temporary]
+View [Secure, materialized, Recursive]
+Database [Transient]
+Schema
+Warehouse
+Role
+User
+File format
+Stage -> @external (storage int with aws/azure/gcs) vs internal (table % /user # /named)
+Srorage Integration
+Share
+Task (ALTER RESUME/SUSPEND) (AFTER <task>) -> when, after, schedule
+Pipe -> SYSTEM$pipe_status (ALTER REFRESH)
+stream
+External table
+Dynamic Table
+Masking Policy
+ROW Access Policy
+tag
+Procedure
+Order
+SEQUENCE
+RESOURCE MONITOR (creadit quota)
+
+
+    Related Terms:
+Grant
+Cloning -> table/stream
+Swapping table
+Sampling table [Row, Block]
+Time Tavel / Retention period
+Reader Accounts
+Clustering
+Query Acceleration Service (QAS)
+Search OPTIMIZATION Service (SOS)
+SQS queue
+before
+at
+changes
+with
+SHOW (TERSE) <obj> in <higher obj>
+
+    Table Functions:
+VALIDATE_PIPE_LOAD
+Validate
+Flattenf
+information_schema.copy_history
+information_schema.task_history
+information_schema.materialized_view_refresh_history
+information_schema.policy_references
+information_schema.tag_references_all_columns
+RESULT_SCAN(LAST_QUERY_ID())
+
+    Functions
+get_ddl('<object>, <object's name>') -> definition of the object
+SELECT * RENAME() ...
+exists(<SELECT ...>)
+EXTRACT_SEMANTIC_CATEGORIES('<table>');
+system$get_tag_on_current_column('<tag reference>')
+system$get_tag_on_current_table('<tag reference>')
+Flatten
+Lateral
+system$stream_has_data('<stream name>') -> boolean
+SYSTEM$CLUSTERING_INFORMATION
+SYSTEM$CLUSTERING_DEPTH()
+system$get_tag()
+SYSTEM$ESTIMATE_QUERY_ACCELERATION
+QUERY_ACCELERATION_ELIGIBLE
+
+    SPs:
+ASSOCIATE_SEMANTIC_CATEGORY_TAGS('<table>', EXTRACT_SEMANTIC_CATEGORIES('<table>'))
+
+
+
+OTHERS
+alter table if exists <patient> modify column <zip> set masking policy <zip_code_mask>;
+alter table if exists <patient> modify column <zip> unset masking policy
+
+
+NUMBERS
+
+----------------duration----------------------
+1 year  - Certain account usage views retention period
+
+6Ms-7ds - information_schema retention period
+
+90 days - MAX period of permenant objects of retention period for Enterpise+
+
+64 days - Expired preiod of a file in stage 
+          Bulk Load is saved in target table metadata
+
+31 days - maximum days result cache is gonna be saved as long as it is still saved by exeution within a day
+
+30 days - All Snowflake-managed keys are automatically rotated by Snowflake when they are more than 30 days old.
+
+14 days - retention period can be extended automatically to prevent staleness
+        - Load history for Snowpipe is retained
+
+1 day   - Retention period of all objects of Standart and non-permenant objects of all Edition
+          Result cache retention period
+
+12hrs   - default lock_timeout value
+
+4 hrs   - Sessios times out due to inactivity
+
+3h-45Ms - latency period for remaining acc usage views
+
+2 hrs   - latency period for most acc usage views
+
+5 min   - default autosuspend of VWH in Web UI
+
+60 secs - min VWH charging period
+
+
+---------Quantity-------------------
+1000    - maximum number of tasks a DAG can include (with root task)
+        - Number of files can be specified to FILES in COPY command
+
+100     - Maximum number of child tasks of a parent/root task
+        - Maximum number of proccessor tasks of a child task
+        - Max number of scale (x) in QAS
+
+25      - maximum number of accs in an organization by default (it can be exceed by the help of Snowflake Support)
+
+10      - Max number of cluster in Multi clustering Warehouse
+
+-------------size---------------
+500-50MB  - Uncompressed size of each micro-partition
+
+250-100MB - recommended compressed size of data files for optimal bulk data
+
+16MB      - Max size if semi-structured data types
+
+100kb     - rocommended max size of SP body (code)
+
+
+
+BY Edition
+E+:
+Materialized views
+QAS
+Multi cluster
+
+
+
+
+
+
+
+
+ydb23948.us-east-1.

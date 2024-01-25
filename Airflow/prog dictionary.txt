@@ -1,0 +1,3 @@
+DAG - directed acyclic graph (which flowing graph that is not cycle)
+Idempotent - Whatever input the output is the same every time
+https://www.intricity.com/learningcenter/algorithms-that-run-the-world

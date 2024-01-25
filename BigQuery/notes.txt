@@ -1,0 +1,98 @@
+BigQuery is Data warehousing serverless service of GCP
+
+There is no "schema" but "dataset"
+No "database" but "project"
+inside dataset you can create:
+    Table
+    Temp table
+    External table (takes data from Google drive, Google Cloud Storage, BigTable and Cloud SQL)
+        In case of Federated query, performance can be slower, no cache
+        used for least frequently accessed big data or frequently small data source
+        When Federated query is happened two BigQuery layer works:
+            Engine - transform data
+            Storage - Write query's result to storage
+    View 
+    Materialized View - pre-computed
+    (temp) UD Function (SQL or JavaScript)
+    Connection (connection with Cloud SQL)
+
+    - tables and functions have 60-day storage limit by default. 
+        to do it NEVER connect Bill account
+
+Query result is cached for 24 days in temp table
+    But if you want you can store the result in managed table
+
+Query itself is saved for 8 month ot up to 1000 queries
+    you can define a query as "saved" to save it forever
+    YOu can share a query by query share feature
+
+Visualization:
+    Looker
+    Data Studio (Visualization tool of GCP)
+    Sheets
+    Partner BI tools
+
+
+Access:
+    By IAM you can give access to use your resource to a user (google/service account, project user) or group
+    Source can be table/view/dataset/project etc
+    Just assign permission for the resources
+
+    Columns based access:
+        You can create a dedicated dataset includes hidden column views
+        and give access on it to dedicated users
+        -> Create user, as a role choose BigQuery role so the user can access to BigQuery
+        -> And go to dataset and add the user to permission of dataset  
+
+BigQuery in GCP Architecture:
+    Organization -> [Billing account, [*Folders -> Project ~>[*Objects, Billing account] ]]
+    Access in Folder is inherited to its sub objects
+
+    Pricing:
+        On-demand:
+            You will pay for each bytes processed by each query
+            Consider about per-project limitations and quotas
+        
+        Flat-rate:
+            Pay for reserved compute capacity
+            Can be set in org, folder or project-level
+    
+    You cannot query data across locations
+    But service provided multi-region options for data objects
+
+    Deployments:
+        - First way is storing raw data in one place and distributing data marts across Folders
+            Folders are pay separately for computing and can use their own quotas
+        
+        - reversed version. Raw data in multiple sources is cleared and sent to one place
+    
+Table:
+    in BQ there are both PARTITION BY and CLUSTER BY options helping proper distribution
+    There is also Time Travel feature 7 days
+    CTAS is also available
+
+
+Storing data:
+    Columnar
+    Data is formatted of CAPACITOR (encode data)
+        Run length encoding:
+            For example in a column there are 5 the same records in a row (clustered)
+            let's say the record is "money". And it is encoded as money:5 in Capacitor format
+    
+    But where the file is gonna be saved actually???
+    Colossus (distributed file system):
+        Your data in a table is stored physically in desks across Zones (Zone A, Zone B, etc) in a Region
+        This insures that no data is lost 
+        To make insure availability along with durability, it is replicated into AZs
+        Data is encrypted at rest  
+
+Storage Optimizing:
+    Partitioning:
+        Break the data into peaces based on some field or expression
+        take low cardinality as a key
+        recommended size is greater than 1GB per partition
+        It insures that metadata on each partition is not be created.
+    Clustering:
+        Sorting the table physically based on up to 4 fields
+        Take higher cardinality
+        Automatic and free re-clustering
