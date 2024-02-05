@@ -15,4 +15,5 @@ Beam supports many programming languages to send API calls: Python, Java, Scala,
     Input and output of the PTransform is one or more PCollection
 
 - Pipeline:
-    is collection of PCollections and PTransforms as
+    is collection of PCollections and PTransforms as a DAG
+
