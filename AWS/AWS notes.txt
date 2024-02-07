@@ -1839,7 +1839,90 @@ Others:
 Serverless NoSQL Data Base (NoSQL - not only SQL or non SQL)
 Scale horizontally by additional instance
 It is distributed. No joins. No aggregation
+each row is up to 400KB
 
+Data types:
+    Scalar         - String, Number, binary, Boolean, Null
+    Document Types - List, Map
+    Set types      - String Set, Number set, Binary list
+
+Primary Key
+    It is mandatory to choose a PK for a table during creation
+    PK can be in two options:
+        Partition Key (or HASH key)
+            Should be high cardinality
+            Unique user id for example
+        Partition Key + Sort Key
+            For example a table which records games.
+            User id can be partition key, a user can attend more than 2 games
+            In this case Game id field will be Sort key.
+
+Table's capacity
+    Provisioned
+        You specify the number of reads/writes per second              \
+        You need to plan capacity beforehand                            |
+        Pay for provisioned capacity units                              |
+                                                                        | - You can switch diff modes once in 24 hrs
+    On-demand                                                           |
+        Read/write automatically scale up/down with your workloads      |
+        No capacity planning need                                       |
+        Pay for what you use, more expensive (2.5x Provisioned)        /
+
+    Write Capacity Units (WCU):
+        1 WCU represents 1 write per second for an item up to 1KB
+        If the items are larger than 1KB, more WCU are consumed
+        
+        Sample 1: 20 items are written in a table per second and each item size is 2KB
+                  20 * (1 sec / 1 sec) * ceil(2KB) = 40 WCUs
+        Sample 2: 120 items per minute, each item 4.5 KB
+                  120 * (1 sec / 60 sec) * ceil(4.5KB) = 2 * 5 = 10
+    
+    Write Capacity Units (RCU):
+        When data is written into DB, in backend, it is done to a certain server
+        And this server replicates the dato to other read services
+        and client is addressed to the other service to read data from.
+        REGARDING this process read capacity is divided into 2 types
+        
+        - Eventually Consistent Read (default)
+            It is possible some data staling when requesting just after it is uploaded
+            After, for example some milliseconds
+        
+        - Strongly Consistent Read
+            No any data stale.
+            Now upload, then you can read it now.
+            To apply this option in GetItem, BatchGetItem, Query or Scan APIs, we set `ConsistentRead` as True
+            it charges double RCUs of Eventually Consistent Read
+        
+        Calculating RCU
+            1 RCU represents 1 Strongly Consistent Read or 2 Eventually Consistent Read per sec, for an item up to 4KB
+            if a item more than 4 KB more RCU will be added
+            Sample 1:
+                10 Strongly Consistent Read per second, 4KB item size
+                10 * 1sec * ceil(4KB/4KB) = 10RCUs
+            
+            Sample 2:
+                10 Eventually Consistent Reads per second with 6KB size:
+                (10/2) * 1 sec * ceil(6KB/4KB) = 5*2 = 10 RCUs
+                It would be 20 if Strongly Consistent Read option was enabled
+
+Partitions Internally
+    Data is stored in partitions
+    Partition Keys go through a hashing algorithm to know to which partition they go to
+    To compute number of partitions:
+        - by capacity = (RCU/3000)+(WCU/1000)
+        - by size = TotalSize/10 GB
+        - #of partitions = ceil(max(# by capacity, # by size))
+    WCUs and RCUs are spread evenly across partitions
+
+Throttling:
+    If we exceed provisioned RCU or WCU, we get "ProvisionedThroughputExceededException"
+    Reasons:
+        How Keys/Partitions - a partition is requested too often
+        Very large Items - RCU and WCU depend on size of items
+    Solution:
+        Exponential backoff (already in SDK)
+        Distribute partition keys as much as possible
+        If RCU issue, we can use DynamoDB Accelerator (DAX)
 
 Basic Operations
     PutItem
@@ -2008,4 +2091,3 @@ Session State Cache
     
     vs S3:
         It is specialized for big size data and higher latency
-

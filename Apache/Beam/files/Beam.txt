@@ -1,0 +1,19 @@
+Apache Beam is an open-source, unified model for defining both batch and streaming data
+processing pipelines. It provides a programming model that allows developers to express
+data processing workflows in a portable and scalable manner, which can be executed on
+various distributed processing backends.
+
+Beam supports many programming languages to send API calls: Python, Java, Scala, SQL
+
+-PCollection:
+    distributed, immutable set of data.
+    stands for "Parallel Collection," and it serves as the primary way to
+    represent data in Apache Beam pipelines.
+
+- PTransform:
+    Function that is applied for each record of one or more PCollection
+    Input and output of the PTransform is one or more PCollection
+
+- Pipeline:
+    is collection of PCollections and PTransforms as a DAG
+
