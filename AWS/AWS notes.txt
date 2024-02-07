@@ -1715,4 +1715,297 @@ Lambda Concurrency
         In this case cold start never happens
         Application Auto Scaling can manage provisioning concurrency (schedule or target utilization)
 
-    !!!!!NOTE
+Dependencies
+    aws lambda create-function --zip-file fileb://function.zip 
+                               --function-name lambda-xray-with-dependencies
+                               --runtime nodejs14.x
+                               --handler index.handler
+                               --role arn:aws:iam::001736599714:role/DemoLambdaWithDependencie
+    
+    --zip-file: contains all code includes dependencies which run by lambda function
+    --handler:  the handler function which is called when LF is invoked
+
+Lambda Function as a code. CloudFormation
+    You can define a template that creates a new Lambda Function
+    Inline:
+        You define code of LF in CloudFunction yaml along with other parameters (runtime, role, etc)
+        Used for very small functions   
+        Cannot define dependencies
+    S3:
+        Instead of inline code you can reference to S3 zipped object
+        3 parameters you should specify:
+            S3Bucket - from which function you want to take the .zip file from
+            S3Key    - address of the .zip object in the bucket
+            S3ObjectVersioning
+                The S3ObjectVersioning parameter accepts a string value. The possible values are:
+                    "All": The function uses all versions of the object in the S3 bucket.
+                    "Latest": The function uses only the latest version of the object in the S3 bucket.
+                    "String": You provide a specific version ID as a string.
+        Unless you update one of S3Bucket, S3Key, S3ObjectVersioning the CloudFormation does not update your function
+                                       even though you updated the code itself. That is why versioning is recommended
+                            
+        Multi Account:
+            you can reference other account's S3 resource for your CloudFormation
+            For this:
+                Other account creates a role with GetObject access on its S3 and your CF role is specified as principal
+                And our account specify the GetObject access on the S3 resource in the CF role 
+                And Other account's S3 Bucket Policy should allow you
+                
+Lambda Container Images:
+    Instead of uploading .zip file you can define own image container
+    It packs your up to 10GB of packages (code, dependencies, etc)
+    The context and syntaxes is the same with Docker:
+        First to communicate with Lambda you get base Lambda Runtime API (Python, Nodejs, custom) image
+        And you can add your own code
+        Install packages you need (dependencies)
+        And they all will be a image
+        Just publish it ECR, Docker hub, ...
+        Dockerfile:
+            # Use an official Node.js runtime as a base image
+            FROM amazon/aws-lambda-nodejs:12
+
+            # Copy package.json and package-lock.json to the working directory
+            COPY package*.json ./
+
+            # Install dependencies
+            RUN npm install
+
+            # Copy the rest of the application code
+            COPY . .
+
+            # Set the Lambda function handler
+            CMD ["app.handler"]
+
+    What will happen the lambda function is invoked?:
+        Container Image Retrieval:
+            If the function is not already running or if it needs to be scaled to handle the current load,
+            AWS Lambda pulls the container image from the specified container registry (e.g., Amazon ECR, Docker Hub)
+        Container Initialization:
+            The Lambda runtime initializes the container by executing the instructions in
+            the Dockerfile (e.g., installing dependencies, setting up the environment).
+        Function Execution:
+            The Lambda runtime invokes the specified entry point (e.g., the CMD in the Dockerfile)
+            to execute the Lambda function code.
+        Processing Event:
+            The Lambda function processes the incoming event or trigger based on
+            the logic defined in your function code.
+        Response:
+            The Lambda function can generate a response, which is returned to
+            the invoker or passed to other AWS services.
+        Container Reuse (Warm Starts):
+            If the function is invoked again within a certain period and there is an available
+            warm container, Lambda reuses the existing container. This helps to reduce the startup time and improve performance.
+        Container Retention (Container Reuse Window):
+            AWS Lambda retains the container for a certain period, known as the "container reuse window."
+            During this window, if the function is invoked again, Lambda can reuse the existing container
+            without the need to pull the container image again.
+        Container Cleanup (Cold Starts):
+            If the container is not used within the retention period or if it's beyond the container reuse window,
+            AWS Lambda may terminate the container to free up resources. Subsequent invocations may result in a
+            new cold start, requiring the container image to be pulled again.
+
+Versioning
+    You may create several versions of your code. Click "create version" for this
+    When you create ur 1st version it's id will be 1 and so on.
+    all versions are independent and have different ARN
+    But you can give them alias names. Test, Prod, Dev, etc
+    And aliases can be Weighted across versions. For example Dev may be Weighted 10% for v3 (or $Latest) and 90% fpr v2
+    When you specify id of version function code will be immutable. When you do $latest it will be mutable. 
+                                                  codes are changed in function when new versions is available
+
+Function URL:
+    Generates dedicated URL endpoint for a lambda function (points to either alias or unpublished version (latest) of the function)
+    So, you can invoke the function by web browser, curl, postman, etc
+    Access is only through public internet (not Private-link)
+    Supports Resource-based Policy and also CORS (Cross-origin ) configuration
+    Auth Type (allowing principals' traffic by a security method):
+        None - allows public and unauthenticated access
+        AWS_IAM - used to authorize or authenticate request by IAM
+            The same account:
+                Identity-based policy OR Resource based policy required 
+            Cross Account
+                Identity-based policy AND Resource based policy required
+
+Others:
+    limits:
+        Memory allocation: 128-10GB (1mb increment)
+        Maximum execution time: 900 seconds
+        Env variables: 4 KB 
+        Lambda function deployment size compressed 50MB or uncompressed 250MB (Code+dependencies)
+
+------------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------------DynamoDB-------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------
+Serverless NoSQL Data Base (NoSQL - not only SQL or non SQL)
+Scale horizontally by additional instance
+It is distributed. No joins. No aggregation
+
+
+Basic Operations
+    PutItem
+        Creates new item or fully replaces old item
+        Consumes WCU
+    
+    UpdateItem
+        Edits existing item's attributes or adds a new item if it doesn't exist
+        Can be used to implement Atomic Counter
+    
+    GetItem
+        Read based on Primary Key
+        Read mode can be specified
+        ProjectionExpression can be specified to retrieve only certain attributes
+    
+    Reading Data (Query)
+        Returns items based on:
+            KeyConditionExpression
+                Partition Key value (must be = operator) - REQUIRED
+                Sort Key value (=, <, Between, Begin with, etc)
+            FilterExpression:
+                This expression is executed after Query operation just for visualization
+                Used only non-key attributes
+        
+        Returns items specified by LIMIT or up to 1MB
+        To get more data you can use pagination in result
+
+        Can query table, Local Secondary Index or Global Secondary Index
+    
+    Reading Data (Scan)
+        Reads entire table
+        The result can be filtered only and it is inefficient for capacity
+        returns up to 1 MB data and can use pagination
+        Consumes a lot of RCUs
+        use LIMIT to reduce the cost
+        Use PARALLEL SCAN for better performance
+    
+    DeleteItem
+        Deletes an item from table 
+        Ability to perform a conditional delete
+    
+    DeleteTable
+        Delete a whole table
+        Much quicker than deleting one by one with DeleteItem
+
+    Batch Operations:
+        Define multiple API calls in one API call
+        Operations are done parallel for better efficiency
+        not atomic, port of items can fail
+
+        - BatchWriteItem
+            Can write/delete into only one table
+            Collection of max 25 PutItem and/or DeleteItem in one call
+            up to 16 MB write, up to 400KB for per item
+            UnprocessedItems for failed write operations (use exp backoff or add WCU)
+
+        - BatchGetItem
+            Can read from multiple table
+            Up to 100 GetItem or 16 MB of Data
+            UnprocessedItems for failed write operations (use exp backoff or add RCU)
+
+    PartiQL
+        SQL-compatible query language for DynamoDb
+        select, insert, update, delete
+        Can be run in:
+            AWS Console
+            NoSQL Workbench for DynamoDB
+            DynamoDB APIs
+            CLI, SDK
+    
+    Conditional Writes
+        For Put, Update, Delete and BatchWrite
+        You will specify condition expression to determine which item should be modified
+            - attribute_exists
+            - attribute_not_exists
+            - attribute_type
+            - contains (for string)
+            - begin_with (for string)
+            - IN / BETWEEN
+            - size (string length)
+    
+        Sample
+            $aws dynamodb delete-item --table-name ProductCatalog --key '{"ID": {"N": "456"}}' \
+                                      -- conditional-expression "attribute_not_exists(Price)"
+    
+    NOTE!!!!!! FilterExpression is for only result of read operation
+               ConditionalExpression is for write operation
+
+Indexes - LSI and GLI
+    This is no-SQL. Everything is about: Keys and others
+    For querying data you can specify only ONE partition key and multiple Sort Keys
+    But sometimes you often need to query based on other non-key attributes
+    But this is not directly possible in DynamoDB but you will scan full table
+
+    In this situation you can create indexes so that you can query based on those
+    
+    Local Secondary Index
+        Alternative to Sort Key for a table
+        It is scalar attribute
+        Up to 5 LSIs can be created per table
+        Must be defined in creation
+    
+    Global Secondary Index
+        Creates separate object (table)
+        Alternative to Primary key (You can define Partition Key and Sort Key (optional))
+        Can be created after table creation
+        Have separated throughput capacity
+        If GSI throttle ,base table also throttle
+
+Optimistic Locking
+    To prevent conflicts of updates
+    Every row has VERSION number
+    if two request try to update row, one of them is ignored as another updated version number indirectly
+
+DAX
+    fully managed cache, memory service of Dynamo
+    You will create DAX cluster and specify nodes 
+    And your popular data is gonna be cached in DAX cluster
+    Good solution for Hot Keys
+
+Streaming
+    You can enable Streaming in table for update/put/delete
+    it can be used Kineses or can trigger a Lambda function to log data
+    Duration: 24 hrs
+
+TTL
+    You can enable TTL and specify attribute name
+    And during item creation specify epoch number in the attribute
+                                        which you set for TTL
+    After it is expired data is deleted
+    It ensures your data is always fresh
+    doesn't consume WCU cost
+    Logged in DynamoDB Stream
+    Deleted from secondary indexes as well
+
+CLI ($aws dynamodb scan ...)
+    --projection-expression "att1, att2, ...": attribute(s) to retrieve
+    --filter-expression: filters the result
+    --page-size: defines number of items for per API call (to avoid timeout)
+    --max-items: number of items shown in CLI (in addition it gives NextToken like pagination)
+    --starting-token: takes token which should go to
+
+Transactions (ACID)
+    all-or-nothing operation (add/update/delete) across one or multiple operations
+    Provides Atomic, Consistency, Isolation and Durability (ACID)
+    It is availability in Read and Write mode
+    TransactionGetItems - one or more GetItem s
+    TransactionWriteItems - one or more Put/Get/DeleteItem s
+    Consumes 2x WCU & RCU (because stage and commit operations)
+    Capacity Computation:
+        1 WCU = 3 Transactional Writes, with item size of 5KB
+        1 RCU = 5 Transactional Reads/, with item size of 5KB
+
+Session State Cache
+    You can cache Session State in DynamoDB.(Login session for example)
+    
+    vs Elasticache:
+        It is in-memory service while DDB is serverless
+        DDB can scale out/in easily
+    
+    vs EFS:
+        EFS is good choice but it is file system while DDB is database
+    
+    vs EBS:
+        It is local, doesn't share its cache to other from EC2 instance 
+    
+    vs S3:
+        It is specialized for big size data and higher latency
+
