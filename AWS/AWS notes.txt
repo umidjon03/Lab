@@ -2234,4 +2234,78 @@ Security
         Fully manages user lifecycle, token expires automatically
         API Gateway verifies identity automatically from AWS Cognito
         Authentication -> Cognito User Pools & Authorization -> API Gateway Methods
+
+    Lambda Authorizer (Custom Authorizer)
+        Token-based authorizer (bearer token, Oauth, JWT)
+        A request parameter-based Lambda authorizer (header, query string, stage var)
+        Lambda must return an IAM policy for the user, result policy is cached
+        Authentication -> External & Authorizer -> Lambda function
+
+        For example: a user gets Oauth token from 3rd Authentication system and 
+        send request to the APIG's API with the token. the APIG takes token and Context
+        and sent it to dedicated Lambda Authorizer so the Lambda authorizer goes to the
+        3rd part app to verify the token and return IAM policy according the token (if success)
+        After APIG getting IAM policy, save the policy in Policy cache and talk with backend
+
+WebSocket API
+    We know that traditional and ordinary APIs response you when you request something
+    Like: because you are too shy, you talk to your gf when she asks something
+    It is kinda one-way communication. You are, let's say, SOAP API
+
+    But your gf has another bf (i am sorry, but he is not you) who's similar herself:
+    sometimes He asks and she answers or sometimes vice-versa.
+    In this case your boyfriend-in-law is WebSocket API.
+
+    For the client (I am about your gf again) both APIs are beneficial in different
+    purposes. WebSocket is used by the client in real-time scenarios (chat,
+    collaboration platforms, etc...) while the Rest API is cost-effective and processes
+    more complex tasks ;)
+
+    Two-way interactive communication btw a user's browser and a server
+    client and WebSocket API are tied through persistent connection.
+    The client is routed among different Lambda functions regarding its request context 
+    (onConnect, sendMessage, etc...)
+    For example client send request that defines sending message to another client to 
+    Websocket API Gateway and the APIG routes the request to proper backend that send 
+    the message to the another user. And it can be stored in DynamoDB
+
+    URL: `wss://[some-uniqueId].execute-api.[region].amazon.com/[stage-name]`
+
+    When user call this wss URL first time (onConnect), APIG establishes a new persistent
+    connection and every connection (APIG -> Lambda or Lambda -> DynamoDB) gets the same
+    `connectionid`. And the connectionid is re-used for next calls
+
+    It is still one-way right? go ahead: the other client reply to you a message.
+    In this case a backend sends HTTP Post to you back through the same connection
+    by specifying the `connetionid` in the url:
+    Post -> `.../[stage-name]/@connection/connectionid`. It is called callback.
+    HERE WE GO! Now we have two-way communication with the server. 
+                                    ||
+                                    \/
+    Connection URL Operations:
+        Post   -> Sends a message from the server to the connected WS Client
+        Get    -> Gets the latest connection status of the connected WS Client
+        Delete -> Disconnect the connected client from the WS connection
+
+    Routing:
+        When you call the API for sending message how the APIG know which function it
+        needs to invoke? By predefined routing
+        If no routes, it is routed to $default function
+        as a client you define route selection expression on the request says which 
+        function should be chosen
         
+        Incoming data: {"service": "chat", "action": "join", "data": {"room": "r1234"}}
+        our route key table: $connect -> f1, $disconnect -> f2, $default -> f3, join -> f4, etc...
+        So the expression can be $request.body.action ("join") so it invokes f4.
+
+Testing Production:
+    We always test firstly after releasing a new features. Last step of testing is that 
+    testing with real clients in production level.
+    To test for example, prod stage in APIG, we will enable Canary in stage level.
+    during enabling canary we are asked to specify traffic shares to canary and current stage.
+    here, canary is the latest deployed API while current stage is current stage. 
+    For example after enabling canary if we deploy a new version of API on the stage
+    it is considered as canary and the previous version is still 'current stage'.
+    If again deploy 3rd version, this 3rd version is canary and the 1st version is still
+    'current stage'. After Promoting Canary in console of stage, the 3rd version will be 
+    'current stage' now
