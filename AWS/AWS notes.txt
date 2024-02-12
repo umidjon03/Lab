@@ -2091,3 +2091,147 @@ Session State Cache
     
     vs S3:
         It is specialized for big size data and higher latency
+
+--------------------------------------------------------------------------------------------------------------------
+----------------------------------------------------API Gateway-------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
+Serverless, version
+Middleman that receives and sends proxy request (after some modification) to the aws/on-premises resource
+It opens our servers to the world of Internet
+
+Integrations
+    Mock:
+        API Gateway returns a response without sending the request to the backend
+
+    AWS Lambda:                                                            \
+        Invoke lambda function                                             |
+        Easy way to expose Rest API backed by lambda                       |
+                                                                           |
+    HTTP:                                                                  |
+        Expose HTTP endpoints in the backend (ALB, own on-premises API)    | - can be mapped
+        useful for rate limiting, caching, user auth, API keys, etc        |
+                                                                           |
+    AWS Services:                                                          |
+        Expose any AWS API through API Gateway                             |
+        Start an AWS Step Function workflow, post a message to SQS         /    
+    
+    AWS_PROXY (Lambda Proxy):
+        incoming request from the client is the input to Lambda
+        No and mapped request to backend or mapped response to client. IT IS Direct
+        Cannot add header
+    
+    HTTP_PROXY:
+        No mapping templates
+        the HTTP request is passed to the backend (and back response) directly 
+        Possibility to add HTTP Headers if need be (API key )
+
+    Mapping template? For example you have an SOAP API (XML) server and but the data comes from
+    Rest API (JSON). Thanks for Mapping feature of API Gateway, it fetches data from rest API
+    and translate/maps to XML and send proxy request to the SOAP request, and get response from
+    the SOAP in XML request and send proxy response to rest API in JSON format
+    If you don't want to any transformation, you can enable "proxy integration"
+
+Endpoint Types
+    Edge-optimized (default)
+        For global clients
+        Requests are routed through CloudFront Edge locations 
+        API Gateway still lives in only one region
+
+    Regional
+        For clients within the same region
+    
+    Private
+        Can only be accessed from your VPC using an Interface VPC Endpoint (ENI)
+        Use resource policy to define access
+    
+Authentication through:
+    IAM Roles (internal users)
+    Cognito (external users)
+    Custom Authorizer (own logic)
+
+Stages:
+    Every project has its own several environments like prod/test/dev/etc..
+    But how API knows that which user must be routed to which resources?
+    We will create stages: dev, test, prod
+    Then endpoint will be like: URL/DEV/home/get-product
+                                URL/TEST/home/get-product
+                                URL/PROD/home/get-product
+                
+                Use Case
+    (Initially we have no any stage yet)
+    For example we may want to route users to lambda functions
+    function name is get-product and we have 3 alias: dev ->  $Latest version
+                                                      test -> 2nd version
+                                                      prod -> 1st (95%) and 2nd (5%) version
+    In this case, the ARN of the function alias will be almost the same except 
+                                                        ':<alias name>' suffix
+
+    Let's back to API Gateway. we will create resource to `/home/get-product`
+    And create method: method type: GET, Integration: Lambda Function, proxy: on,
+        Lambda function ARN: `<ARN of function>:${stageVariables.lambdaAlias}`
+    So it means that given ARN is not completed yet as the part after colon is
+    taken by stage variable named lambdaAlias
+    Now, create a stage DEV and assign variable lambdaAlias as dev
+    Then the ARN in DEV stage will go to function of `<ARN of function>:dev`
+    Recap: URL/DEV/home/get-product ---------> `<ARN of function>:dev`
+
+    You learn Stage and Stage Variables right now)
+
+Integration with OpenAPI
+    OpenAPI is a kinda definition of API.
+    It can be JSON or YAML
+    in case of API Gateway you can upload a OPENAPI file to create an API
+    Or can export current API as an OpenAI file
+    It can be helpful to get API logic easily by either human or machine
+
+Cache
+    You cab enable caching in API Gateway. 
+    So, the service looks up from cache, if not found, it goes to backend
+    TTL is 399 seconds by default. 0-3600s
+    Size: 0.5 - 237 GB
+    - caches are defined per stage
+    - Possible to override cache settings per method
+    - Very expensive, makes sense in only production stage
+    Caching can be disabled immediately with header: `Cache-Control: max-age=0`
+    NOTE!!! If you don't impose an InvalidateCache policy or keep disabled Per-key cache invalidation,
+        in console of API/method creation, any client can invalidate the API cache
+
+CloudWatch with API Gateway
+    Logs:
+        Enabled at the Stage level (wth Log lvl - ERROR, DEBUG, INFO)
+        Contains info about request/response body
+        Can override settings on a per API basis
+    
+    X-Ray:
+        Enable x-ray to get extra info about requests in API Gateway
+    
+    Metrics:
+        Metrics are by stage. Possibility to enable detailed metrics
+        CacheHitCount & CacheMIssCount: efficiency of the cache
+        Count: API requests in a given period
+        IntegrationLatency: Time btw API send request and get response from backend
+        Latency: Time btw API Gateway receives request and send response to a client (indeed greater than IntegrationLatency
+                                                                                        smaller than timeout 29 seconds)
+        4XXError (client-side) & 5XXError (server-side)
+    
+    Throttling:
+        throttles requests at 10000 rps across all API
+        429 Too Many Request error
+        Can set Stage limit and method limits
+
+Security
+    IAM: create and attach IAM policy to a user/role so that he can invoke an API. 
+    Authentication -> IAM & Authorization -> IAM Policy
+    Leverages "Sig v4" capability where IAM credential are in headers
+
+    API Gateway Resource Policy
+        Defines who/what can access on what in which action.
+        Used for Cross Account Access (combined with IAM)
+        Allow for a specific source IP addresses /a VPC endpoint
+    
+    Cognito User Pools
+        A database of users
+        Fully manages user lifecycle, token expires automatically
+        API Gateway verifies identity automatically from AWS Cognito
+        Authentication -> Cognito User Pools & Authorization -> API Gateway Methods
+        
