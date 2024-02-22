@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: Some description
+Resources:
+  helloMars:
+    Type: AWS::Serverless::Function
+    Properties:
+      Handler: app.handler
+      Runtime: python3.9
+      CodeUri: s3://umidjon-code-sam/b03bd2c1f1f8f4dcc002c5f5d6ac0689
+      Description: A starter AWS Lambda Function
+      MemorySize: 128
+      Timeout: 3
+      Environment:
+        Variables:
+          TABLE_NAME:
+            Ref: myTable
+          REGION_NAME:
+            Ref: AWS::Region
+      Events:
+        HelloWorldSAMAPI:
+          Type: Api
+          Properties:
+            Path: /hello
+            Method: GET
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: myTable
+  myTable:
+    Type: AWS::Serverless::SimpleTable
+    Properties:
+      PrimaryKey:
+        Name: greeting
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2

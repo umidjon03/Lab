@@ -1,0 +1,49 @@
+Let's create CodeDeployment application
+
+pre requested
+    
+    we need to create 2 roles:
+    'CodeDeployRole' -> a role gives permission to CodeCommit to deploy codes into resources
+    'ec2ReadsS3'     -> gives CodeDeploy agent in EC2 to read from S3
+
+    Then create EC2 instance with 'ec2ReadsS3' role
+    name: 'CodeDeploy-test'
+    add tag to define environment:
+        environment -> development
+    open terminal of the ec2 instance and do these:
+    <
+    # Installing CodeDeploy Agent
+    `sudo yum update`
+    `sudo yum install ruby`
+
+    # Download the agent (replace the region)
+    `wget https://aws-codedeploy-eu-west-3.s3.eu-west-3.amazonaws.com/latest/install`
+    `chmod +x ./install`
+    `sudo ./install auto`
+    `sudo service codedeploy-agent status`
+    >
+
+    Create S3 bucket 'umid-codedeploy-test' and upload the 'SampleApp_Linux.zip'
+    you can take a look this folder to get the logic.
+    CodeDeploy first read 'appspec.yml' and deploys according this instruction
+    (It can be taken from GitHub as well)
+
+
+Go to CodeDeploy console and start creating application:
+    Name: DeployToEc2
+    Compute platform: EC2/On-premises
+        ||
+        \/
+    create deployment group in it:
+        name: demo-dg
+        service-role: CodeDeployRole
+        In-place
+        Amazon EC2 instances: environment -> development (deploys only into development inst`s)
+            ||
+            \/
+        create deployment in it:
+            Revision locations: s3://umid-codedeploy-test/SampleApp_Linux.zip 
+                ||
+                \/
+                OK
+    you can check the result from public ip of the ec2

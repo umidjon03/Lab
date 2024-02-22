@@ -1,0 +1,37 @@
+# SAM File
+AWSTemplateFormatVersion: '2010-09-09' # cloudformation template version
+Transform: 'AWS::Serverless-2016-10-31' # tells cloudformation: "Hey, this is SAM file"
+Description: Some description
+Resources:
+  helloMars:
+    Type: 'AWS::Serverless::Function' # tells: 'Hey create Lambda function with properties below'
+    Properties:
+      Handler: app.handler # gets code from handler function from app.py file as a Handler func of lambda
+      Runtime: python3.9
+      CodeUri: src/ # get the py file from "src" folder which is located in current level
+      Description: A starter AWS Lambda Function
+      MemorySize: 128
+      Timeout: 3 # seconds
+      Environment: # sets env stuffs
+        Variables:  # in handler function, we take some values from env values, so here they're set
+          TABLE_NAME: !Ref myTable
+          REGION_NAME: !Ref AWS::Region
+      Events: # defines what tf triggers the function
+        HelloWorldSAMAPI: # creating something new
+          Type: Api # the something is API
+          Properties:
+            Path: /hello
+            Method: GET
+      Policies:
+        - DynamoDBCrudPolicy: # the function should able to do CRUD against the table
+            TableName: !Ref myTable
+
+  myTable:  
+    Type: AWS::Serverless::SimpleTable # creating a dynamo table
+    Properties:
+      PrimaryKey:
+        Name: greeting
+        Type: String
+      ProvisionedThroughput:
+        ReadCapacityUnits: 2
+        WriteCapacityUnits: 2

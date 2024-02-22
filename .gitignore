@@ -15,3 +15,4 @@ venv
 db.sqlite3
 credentials.txt
 airflow.db
+AWS/developer_associate/sam-codedeploy/sam-app/.aws-sam
