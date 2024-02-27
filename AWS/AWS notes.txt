@@ -2607,3 +2607,265 @@ SAM differs with that it focuses on only serverless and the code is defined as y
 But with CDK, you will define your code in many PLs against any service of AWS
                                     and it is compiled to CF template like SAM
 CDK contains high level components called constructs
+
+!!! You can see all hands-on in ./test-cdk-python/cdk-app folder
+First go to empty folder and say : `$ cdk init --language python`
+It generates cdk-based template for you
+So start defining stacks in the python file (it is created with template like "Cdkappstack")
+in the folder of python files you can create python files which each contains a stack 
+so a stack contains many services as you want
+After defining all services and stacks back to amin folder and create app.py file 
+which says to CDK: hey generate CloudFormation template according to me
+why app.py? because it is written in cdk.json file which is backbone of CF template
+When you command `$ cdk synth` (do it in main folder) it goes to cdk.json and the json
+says hey go to app.py file to know which services is need to be created. So backend goes to 
+app.py and the file says hey here is stacks (it is imported from the stacks folder)
+and generate templates according to this stack classes, and it will be generated
+When you  then command `$ cdk deploy` the change will be deployed into the CloudFormation
+(the first time don't forget to command `$ cdk bootstrap` for per region in an account
+it deploys the CDK Toolkit staging Stack)
+command `$ cdk destroy` to destroy the stack
+command `cdk diff` is used to see difference bte current and in cloud stacks
+
+By bootstrapping, we deploy the CDKToolkit staging Stack, which our deployment is
+processed before going into AWS environment (the toolkit is available in SAM as well)
+
+
+
+
+--------------------------------------------------------------------------------------------------------------------
+---------------------------------------------------- Cognito -------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
+Give users an identity to interact with our web or mobile app
+Cognito: "hundreds of users", "mobile users", "authenticate with SAML"
+it identities out of AWS users while IAM does for AWS users
+
+Cognito User Pools:
+    Sign in functionality for app users
+    integrated with API Gateway and ALB
+
+    CUP has serverless db of users
+    Handles login through username/email with password
+    has email and phone number verification
+    MFA. Federated identities: Facebook, Google, etc
+    It sends back a JSON Web Token or JWT
+
+
+Cognito Identity Pools (Federated Identity):
+    Provide AWS credentials to users so they can access AWS resources directly
+    Integrated with Cognito User Pools as an identity provider
+
+    Well, case: We want users to use our private S3 bucket.
+        In this case we can't give them IAM roles as they are too many
+        Instead we can use Cognito Identity Pools (CIP)
+
+        How it works?
+        A mobile app will sign in and get token from CIP identity tools (SAML, OpenID Connect,
+        Amazon, Google, Facebook, Cognito USER POOL, etc...), let's take CUP.
+        Now user has token from CUP right? Then user will be sent request with the Token
+        to Cognito Identity Pool and CIP validates if the token is OK. If so, it gets 
+        temporary credentials from STS and back to the user the Credentials
+        So now user can access to the defined resource (s3 bucket)
+
+        How CIP knows which accesses the user should be provided? 
+        By IAM role that we predefined for the CIP
+
+    IAM:
+        default role  -> authenticated and guest users
+        defined roles -> by users' IDs
+        We can define policy variables on policies
+            for example we want to give access to user on prefix which 
+            start with user ID:
+            ...
+            "Condition": {"StringLike": {"s3:prefix": ["${cognito-identity.amazonaws.com:sub}/*"]}} 
+            ...
+
+
+CUP + CIP = authentication + authorization
+
+--------------------------------------------------------------------------------------------------------------------
+----------------------------------------------- Step Functions -------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
+
+AWS Step Functions is a serverless orchestration service that allows you to coordinate 
+multiple AWS services into serverless workflows. You can design workflows that 
+orchestrate the execution of multiple AWS Lambda functions, as well as other AWS 
+services like Amazon S3, Amazon DynamoDB, Amazon SQS, and more.
+    Workflow Orchestration
+    Data Processing Pipelines
+    Microservices Orchestration
+    Automated Business Processes
+
+Here's how it works:
+    Define State Machine: 
+        You define your workflow as a state machine using JSON-based 
+        Amazon States Language. This language allows you to define a series of states and 
+        the transitions between them.
+
+    States:
+        Each state represents a single task or activity within your workflow. States can be 
+        one of several types, including Task states (which invoke a Lambda function or an 
+        AWS service), Choice states (which allow you to branch the workflow based on conditions), 
+        Wait states (which add delays to the workflow), and more.
+
+    Transitions: 
+        Transitions between states are defined based on the outcomes of the previous state's 
+        execution. For example, a Choice state might transition to different states based on 
+        the result of a comparison.
+
+    Execution: 
+        Once you've defined your state machine, you can execute it by providing input data. 
+        Step Functions will then execute each state in the workflow according to the defined 
+        transitions until the workflow completes.
+
+    Error Handling: 
+        Step Functions provides built-in error handling, allowing you to define how your workflow 
+        should respond to errors or exceptions that occur during execution. You can specify retry 
+        logic, catch and handle specific error types, and define fallback paths for when errors occur.
+
+        Well, in a task we have 2 error handlers:
+            Retry:
+                It defines how the same task should be run after failing:
+                ...
+                "Retry": [
+                {
+                    "ErrorEquals": [
+                    "CustomError"          --> If error string is "CustomError" then it starts to work
+                    ],
+                    "IntervalSeconds": 1,  --> After failing after how many seconds it should be retried
+                    "MaxAttempts": 2,      --> How many after failing it should be retried
+                    "BackoffRate": 2       --> Exponential backoff rate = 2 x IntervalSeconds
+                },
+                ...]
+
+            Catch:
+                What if no success after retries? The error goes to Catch logic:
+                LambdaInvoke: {
+                    ...
+                    "Catch": [
+                    {
+                        "ErrorEquals": [
+                        "CustomError"
+                        ],
+                        "Next": "CustomErrorFallback",  --> it goes to this state after unsuccess retries
+                        "ResultPath": "$.fuckingerror"  --> This add a parameter named fuckingerror to its output,  
+                },                                                       \so it will be added to input of next state
+                    ...]
+                }
+                "CustomErrorFallback": {   --> this is the state that error comes here to be handled
+                "Type": "Pass",
+                "Result": "This is a fallback from a custom lambda function exception",
+                "ResultPath": "$.fuckingerrorADD"       --> This also adds fuckingerrorADD param to its output. its value 
+                "End": true                                                         will be "Result"'s value
+                },...
+
+            Apart from "CustomError" Step function has its prebuilt error strings:
+                State.TaskFailed   -> if the parent table fails with unknown reason
+                State.All          -> all error
+                States.Timeout
+                States.NoChoiceMatched
+                States.Runtime
+                
+
+
+    Visibility and Monitoring: 
+        AWS Step Functions provides visibility into the execution of your workflows through its 
+        management console and CloudWatch Logs integration. You can monitor the progress of
+        executions, view execution history, and track performance metrics.
+
+    Wait for Task Token:
+        It is a special feature of Step Function that tell to the State that "Wait for task token"
+        It waits until receiving either SendTaskSuccess or SendTaskFailure API call
+        Just append ".waitForTasToken" to "Resource" arn value
+        For example, to authorization purpose we can set "Check Credit" State at the start
+        and we'll apply the feature to this state. This state waits until the one of the 2 API 
+        call received.
+
+    Activity Task:
+        In AWS Step Functions, activities are a way to associate code running somewhere (known as an activity worker)
+        with a specific task in a state machine. You can create an activity using the Step Functions console,
+        or by calling CreateActivity. This provides an Amazon Resource Name (ARN) for your task state. Use this ARN to
+        poll the task state for work in your activity worker.
+
+        An activity worker can be an application running on an Amazon EC2 instance, an AWS Lambda function,
+        a mobile device: any application that can make an HTTP connection, hosted anywhere. When Step Functions
+        reaches an activity task state, the workflow waits for an activity worker to poll for a task. An
+        activity worker polls Step Functions by using GetActivityTask, and sending the ARN for the related
+        activity. GetActivityTask returns a response including input (a string of JSON input for the task) and
+        a taskToken (a unique identifier for the task). After the activity worker completes its work, it can
+        provide a report of its success or failure by using SendTaskSuccess or SendTaskFailure. These two calls
+        use the taskToken provided by GetActivityTask to associate the result with that task.
+
+
+--------------------------------------------------------------------------------------------------------------------
+----------------------------------------------- AppSync -------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
+
+AWS AppSync enables developers to connect their applications and services to data and events with secure,
+serverless and high-performing GraphQL and Pub/Sub APIs. You can do the following with AWS AppSync:
+    Access data from one or more data sources from a single GraphQL API endpoint.
+    Combine multiple source GraphQL APIs into a single, merged GraphQL API.
+    Publish real-time data updates to your applications.
+    Leverage built-in security, monitoring, logging, and tracing, with optional caching for low latency.
+    Only pay for API requests and any real-time messages that are delivered.
+
+GraphQL:
+    Let's say you have many data source types: Aurora (SQL), DynamoDB (NoSQL), OS, other Custom sources with AWS Lambda.
+    And your app need to get access all that data with one API call. 
+    In this case we will create GraphQL schema. And define proper data sources
+    And we can call to GraphQL regardless of where the data is located
+    And GraphQL gets/posts/etc data by API call from its resolvers (data sources)
+
+    Recap:
+        Your server (Web/Mobile apps, real-time dashboard, offline sync, etc) request data from GraphQL
+        and does'n care about data location. Then AppSync gets the data from sources/HTTP APIs
+    
+Security & Authentication:
+    API_KEY
+    AWS_IAM
+    OPENID-CONNECT
+    Cognito User POOl
+
+Recommenced: For custom domain & HTTPS, use CloudFront in front of AppSync
+
+YOu cn integrate it with your app:
+    JavaScript
+    Android
+    IOS
+
+
+--------------------------------------------------------------------------------------------------------------------
+----------------------------------------------- Amplify -------------------------------------------------------
+--------------------------------------------------------------------------------------------------------------------
+Amplify is a services that allows you create a whole Web/Mobile app. You can do it 
+The service provide all needed tools for an app
+Backbones:
+    Amplify Studio --> it is central console
+    Amplify CLI    --> cli commands
+    Amplify libraries --> connect your app existing AWS Services
+    Amplify Hosting --> Hosting app's front securely, reliable, fast web apps, etc...
+
+$ amplify init  --> prepare / initializes all app stuffs
+It gives features such as data storage, authentication, storage, machine-learning.
+    all provided by AWS
+
+
+Backend --> DynamoDB, AppSync, Cognito, S3.
+Amplify deploy Stacks on CloudFormation. It will create needed resources
+For example for data storing, you will create Data Model in Amplify Studio
+But in back end, GraphQL and DynamoDB will be created to store and access your data
+
+Frontend --> provides libraries with ready-to-use components (React, Vue, Flutter, ...)
+
+
+Important Features:
+    $ amplify add auth 
+        Leverages Cognito as authenticator
+        user registration, auth, recovery and other operations
+        Supports MFA, social Sign-in, etc
+        prebuilt UI components
+        Fain-grained Authorization
+    
+    $ amplify add api
+        Adds data store (DynamoDB, AppSync)
+
