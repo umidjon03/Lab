@@ -3004,7 +3004,7 @@ You can audit all (API) calls toward KMS by CloudTrail
 Many services are integrated seamless with KMS (EBS, S3, RDS, SSM, ..)
 But still you can interact with KMS by SDK/CLI
 
-KMS Key Types
+Key Types
     Symmetric:
         Encryption and decryption is done by only one key
         AWS services integrated with KMS use Symmetric keys
@@ -3021,6 +3021,16 @@ KMS Key Types
         You can download/get public key itself, but not private one
         It is used outside of AWS by whom can't call KMS API
 
+KMS Keys:
+    AWS Owned Keys: (free & default)
+        It is supported by AWS and y
+
+Key Rotation
+    AwS Managed Keys are rotated per year automatically
+    Customer Managed Keys (created by customer in KMS) are rotated annually IF IT IS ENABLED
+    Customer Owned Keys are rotated when the customer rotate it manually 
+
+you can manage all accesses on a key by its Key Policy (who can use, delete, etc)
 
 Envelope (konvert) Encryption:
     Envelope Encryption = GenerateDataKey API
