@@ -101,7 +101,7 @@ EBS Volumes are characterized in Size | Throughput | IOPS (I/O Ops Per Sec)
     - System boot volumes, Virtual desktops
     - 1GB - 16TB
     - gp3 is newer generation of gp2
-    - in gp2 volume and IOPS are linked while in gp3 they are independent
+    - in gp2, volume and IOPS are linked while in gp3 they are independent
     - means: 3 IOPD per GB, at 5334 GB we are at the max IOPS (16000) in gp2 (baseline: 3000 IOPS)
     - in gp3 baseline IOPS 3000 and throughput 125 MB/s,  can increase up to 16000 IOPS and 1000MB/s tp independently
 
@@ -189,9 +189,9 @@ Connection Draining (Deregistration Delay)
 -----------------------------------------------------------------------------------------------------------------------------
 --------------------------------------------------EFS------------------------------------------------------------------------
 -----------------------------------------------------------------------------------------------------------------------------
-EFS is an elastic file system which is connected via Network (Network Fie System) with
+EFS is an elastic file system which is connected via Network (Network File System) with
 - It can be associated with EC2 instance when creation
-- Whe you are creating a EC2 ins, by default, other security groups are gonna be created by system and associated 
+- When you are creating a EC2 ins, by default, other security groups are gonna be created by system and associated 
 to the EFS and EC2 (instance-sg-1 > instance | efs-sg-1 > efs) and they maintain the connection
 - you can find an outbound rule in the sg which addresses to the EFS server
 - you cannot connect with your EFS without the rule (port is 2049)
@@ -218,10 +218,16 @@ MULTI AZ (Disaster Recover)
 - It is backup database to which data is replicated SYNC to immediately reflect data 
 - It is good when one one AZ is bombed your data is available in other AZ
 - !!! A Read Replica can also set up as a Multi AZ RDS
-- Primary and Multi AZ RDBs have the same domain so that there is no need any action to tie your app with new backup DB when primary is bombed 
+- Primary and Multi AZ RDBs have the same domain so that there is no 
+    need any action to tie your app with new backup DB when primary is bombed 
 
 
 !! Oracle does not support IAM database authentication 
+
+Security RDS VS Aurora:
+    Master & read replicas are encrypted using KMS, must be defined as launch time
+    If master not encrypted, replicas won't be done
+    Security Group. No ssh is available to connect with the db instances
 
 ------------------------------------------------------------------------------------------------------------------------------------------------
 -----------------------------------------------------------ElastiCache--------------------------------------------------------------------------
@@ -369,7 +375,7 @@ VPC Peering
 
 VPC Endpoints
     Usually all services in AWS are publicly, but what if a service is private?
-    Let's say we have a EC2 instance in private submit and how can we connect to it on behalf a random AWS Service?
+    Let's say we have a EC2 instance in private subnet and how can we connect to it on behalf a random AWS Service?
         - via VPC Endpoint Gateway   - for S3 and DynamoDB
         - via VPC Endpoint Interface - the rest
     In that case you will connect to the EC2 privately, securely, within the VPC, without latency. 
@@ -380,7 +386,7 @@ Connecting to VPC
         - It provides  connection btw your office (for example) and VPC by public connection (www)
         - Connection is encrypted automatically
 
-    - Direct Connect (DX)
+    - Direct Connect (DC)
         - Establishing physical connectivity btw on-premises and aws
         - It is totally private, secure and fast
         - Goes through a private network
@@ -585,7 +591,7 @@ Advanced Concepts:
 
 Cache Policy
     Contents are cached with their unique identifier. With this UID edge location retrieves exact content from cache.
-        Default key is hostname+resource portion
+        Default key is hostname+resource portion (object = sample.com/content/some.html)
         But you can add other elements (HTTP headers, cookies, query strings) to the cache key using CloudFront Cache Policies
             - HTTP header                   None, Whitelist
             - Cookies                       None, Whitelist, Include All-Except, All
@@ -663,7 +669,8 @@ Launch Docker containers on AWS = Launch ECS Tasks on ECS Cluster
 
 EC2 Launch Type:
     you must provision & maintain the infrastructure (EC2 instance)
-    There is a ECS Cluster and it contains EC2 Instances. In case of ECS, each instance must run the ECS Agent to register in the ECS Cluster
+    There is a ECS Cluster and it contains EC2 Instances. In case of ECS,
+    each instance must run the ECS Agent to register in the ECS Cluster
     Then AWS takes care of starting/stopping containers in EC2 instances
     In ECS, security group's rules does NOT matter
 
@@ -833,7 +840,7 @@ Main Components:
             All instances in v1 stop -> Deployment operations -> new v2 instances run)
             - No cost. But when deploying is going, no any instance will be available
         - Rolling
-            Let's say we have 6 instances with v1 code. and we set Bucket size = 2 (2 instances serve as buckets)
+            Let's say we have 5 instances with v1 code. and we set Bucket size = 2 (2 instances serve as buckets)
             so, 2 out of 5 will stop -> deployment -> 2 as v2 and 3 as v1
             then, again 2 out of 3 v1 will stop -> deployment -> 4 as v2 and 1 as v1
             finally, remain 1 instance will be transitioned to v2
@@ -845,14 +852,14 @@ Main Components:
             similar to Rolling option, but new temp instance in number of bucket size will run
             the same example. 5 instances as v1
             2 extra instances in v2 will added -> 2 v1 apps in instances will be stops
-            -> 2 v2 will be runs instead of 2 stopped apps in instances -> 2 v1 stops
+            -> 2 v2 runs instead of 2 stopped apps in instances -> 2 v1 stops
             -> 2 v2 starts -> 1 v1 stops -> 1 v2 starts -> the 2 extra instances will be terminated at the end 
             after the loop 5 v2 apps in the instances will remain. 
 
             - It charges additional cost. Good for prod environment
         - Immutable
             Another temp ASG with a instance (v2) will be created parallel to current ASG ->
-            if the instance with v2 pass health check, remain instances will also be runs ->
+            if the instance with v2 pass health check, remain instances will also run ->
             The new instances v2 will be added to current ASG, and sll v1 instances will be terminated
 
             - quick rollback if issue, 0 downtime, high cost, double capacity, great for prod
@@ -953,7 +960,7 @@ To get Stack events (emIL, lambda) enable SNS Integration using Stack Options
 ChangeSets
     When you update a stack, you need to know what changes before it happens for greater confidence
     Change set won't say if the update will be successful. 
-    YOu do it bu creating ChangeSet from the original Stack. If you like you can update
+    YOu do it by creating ChangeSet from the original Stack. If you like you can update
 
 Nested Stacks
     you can nest a stack inside another. 
@@ -1074,7 +1081,7 @@ Message Filtering
 ------------------------------------------------------------------------------------------------------------------------
 - Kinesis Data Streams: capture, process, store data streams
     Well. so far, now we knew about queue and pub/sub. What about stream?
-    You are using mobile phone and by Kinesis DS apps analyze your sensor data in real time (continuous, ordered, sequenced, scalable)
+    You are using mobile phone and by KDS apps analyze your sensor data in real time (continuous, ordered, sequenced, scalable)
     Retention 1-365 days
     Immutability: once data is inserted in Kineses, it can't be deleted
     data that shares the same partition id goes to the same shard (ordering)
@@ -1143,9 +1150,9 @@ Message Filtering
 
 
 - Kinesis Data Firehose: load data streams into AWS data stores
-    Gets data from sources -> transforms by Lambda (optional) -> Load it into destinations
+    Gets data from sources -> transforms by Lambda (optional) -> Load it into destinations/systems
     No extra ETL tool is required (but can't do full ETL needs. eg no code execution or limited transformation)
-    serverless, filly managed, no admins
+    serverless, fully managed, no admins
     Pay for data going through Firehose
     Near real time (60 sec latency minimum for non full batches) / while KDS is real time (200ms)
     Minimum 1 MB of data at a time
@@ -1660,7 +1667,7 @@ Networking
     Then you can define your own VPC ID (and Subnet, security id) for lambda
     So that you can interact with your sources in the VPC (DB, Storage, ELB etc)
     Check your Lambda role first (should involve AWSLambdaVPCAccessExecutionRole)
-    When you define the VPC in Lambda, ENI (Elastic Network Interface) in subnet
+    When you define the VPC in Lambda, function creates ENI (Elastic Network Interface) in subnet
     so Lambda function interact with the subnet resources through the ENI
     make sure that the services security group must access the Lambda function
 
@@ -1930,7 +1937,7 @@ Table's capacity
         Sample 2: 120 items per minute, each item 4.5 KB
                   120 * (1 sec / 60 sec) * ceil(4.5KB) = 2 * 5 = 10
     
-    Write Capacity Units (RCU):
+    Read Capacity Units (RCU):
         When data is written into DB, in backend, it is done to a certain server
         And this server replicates the dato to other read services
         and client is addressed to the other service to read data from.
@@ -2146,7 +2153,7 @@ Session State Cache
         It is specialized for big size data and higher latency
 
 --------------------------------------------------------------------------------------------------------------------
-----------------------------------------------------API Gateway-------------------------------------------------------
+----------------------------------------------------API Gateway-----------------------------------------------------
 --------------------------------------------------------------------------------------------------------------------
 Serverless, version
 Middleman that receives and sends proxy request (after some modification) to the aws/on-premises resource
@@ -3176,9 +3183,10 @@ protect sensitive information such as API keys, passwords, and encryption keys.
 It enables you to securely store, retrieve, and manage secrets throughout their lifecycle.
 
 
-Secret Manager                                  SSM
-Automatic rotation with LF                      No rotation (but can be done via EventBridge)
-KMS is mandatory                                Not mandatory
+Secret Manager                       |           SSM
+-------------------------------------------------------------------------------------
+Automatic rotation with LF           |          No rotation (but can be done via EventBridge)
+KMS is mandatory                     |          Not mandatory
 
 Cloud Formation - Secrets Manager & SSM
     CloudFormation get values from Secrets Manager & SSM as external reference
@@ -3312,3 +3320,205 @@ How it works:
         sometimes we want only beta tester can see the new feature no all
         in this case we can define override in Evidently by specifying
         the users id and e.g. which version it should be applied 
+
+
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++ TEST Learnings +++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Cross-zone load balancing:
+    if enabled, requests are routed evenly across targets regardless AZ
+    if disabled, request are routed evenly across AZs, each AZ send request evenly across
+                                                                    its targets then
+
+Billing and Cost Management access:
+    admins can give this access by activating IAM user access to the Billing and Cost
+    Management console and attaching an IAM policy to your users. Then, you need to
+    activate IAM user access for IAM policies to take effect. You only need to activate
+    IAM user access once.
+
+EC2 Instance purchasing options:
+    On-demand: 
+        Just you pay for compute capacity by the seconds (minimum 60 seconds)
+        Recommended that you use On-Demand Instances for applications with 
+        short-term, irregular workloads that cannot be interrupted.
+    
+    Spot Instances:
+        A Spot Instance is an instance that uses spare EC2 capacity that is
+        available for less than the On-Demand price. Because Spot Instances enable
+        you to request unused EC2 instances at steep discounts, you can lower your
+        Amazon EC2 costs significantly. The hourly price for a Spot Instance is
+        called a Spot price. The Spot price of each instance type in each Availability
+        Zone is set by Amazon EC2, and is adjusted gradually based on the long-term
+        supply of and demand for Spot Instances. Your Spot Instance runs whenever
+        capacity is available.
+    
+    Dedicated Hosts:
+        An Amazon EC2 Dedicated Host is a physical server that is fully dedicated for
+        your use. You can optionally choose to share the instance capacity with other
+        AWS accounts. For more information, see Work with shared Dedicated Hosts.
+
+        Dedicated Hosts provide visibility and control over instance placement and they 
+        support host affinity. This means that you can launch and run instances on
+        specific hosts, and you can ensure that instances run only on specific hosts
+
+    Dedicated Instances:
+        By default, EC2 instances run on shared tenancy hardware. This means that 
+        multiple AWS accounts might share the same physical hardware.
+
+        Dedicated Instances are EC2 instances that run on hardware that's dedicated to
+        a single AWS account. This means that Dedicated Instances are physically
+        isolated at the host hardware level from instances that belong to other AWS
+        accounts, even if those accounts are linked to a single payer account. However,
+        Dedicated Instances might share hardware with other instances from the same AWS
+        account that are not Dedicated Instances. Dedicated Instances provide no
+        visibility or control over instance placement, and they do not support host
+        affinity. If you stop and start a Dedicated Instance, it might not run on the
+        same host. Similarly, you cannot target a specific host on which to launch or
+        run an instance
+    
+    Reserved Instances
+        Reserved Instances provide you with significant savings on your Amazon EC2 costs
+        compared to On-Demand Instance pricing. Reserved Instances are not physical
+        instances, but rather a billing discount applied to the use of On-Demand Instances
+        in your account. These On-Demand Instances must match certain attributes, such as
+        instance type and Region, in order to benefit from the billing discount.
+
+        you have a running On-Demand Instance (T2) in your account, for which you're currently
+        paying On-Demand rates. You purchase a Reserved Instance that matches the attributes
+        of your running instance, and the billing benefit is immediately applied. Next, you
+        purchase a Reserved Instance for a C4 instance. You do not have any running instances
+        in your account that match the attributes of this Reserved Instance. In the final
+        step, you launch an instance that matches the attributes of the C4 Reserved Instance,
+        and the billing benefit is immediately applied.
+
+Code Commit credentials:
+    - Git credentials
+    - SSH Keys
+    - AWS access keys
+    (No IAM USERNAME AND PASSWORD)
+
+CloudFormation StackSet
+    AWS CloudFormation StackSets extends the capability of stacks by enabling you to
+    create, update, or delete stacks across multiple accounts and AWS Regions with a
+    single operation. Using an administrator account, you define and manage an AWS
+    CloudFormation template, and use the template as the basis for provisioning stacks
+    into selected target accounts across specified AWS Regions
+
+    A stack set lets you create stacks in AWS accounts across regions by using a single
+    CloudFormation template. A stack set's CloudFormation template defines all the
+    resources in each stack. As you create the stack set, specify the template to use,
+    in addition to any parameters and capabilities that the template requires.
+
+    After you've defined a stack set, you can create, update, or delete stacks in the
+    target accounts and AWS Regions you specify.
+
+Communication btw load balancer and target - HealthCheck:
+    You must ensure that your load balancer can communicate with registered targets on
+    both the listener port and the health check port. Whenever you add a listener to your
+    load balancer or update the health check port for a target group used by the load
+    balancer to route requests, you must verify that the security groups associated with
+    the load balancer allow traffic on the new port in both directions.
+
+CloudFormation Parts in YAML:
+    Description, Metadata, Parameters, Mappings, Conditions, Transform, 
+    Resources, Outputs
+
+CloudFront Key Pairs:
+    IAM users can't create CloudFront key pairs. You must log in using root credentials 
+    to create key pairs.
+    
+    To create signed URLs or signed cookies, you need a signer. A signer is either a 
+    trusted key group that you create in CloudFront, or an AWS account that contains a 
+    CloudFront key pair. AWS recommends that you use trusted key groups with signed 
+    URLs and signed cookies instead of using CloudFront key pairs.
+
+ELB Logs & Monitoring:
+    ACCESS LOGS -
+    Elastic Load Balancing provides access logs that capture detailed information about
+    requests sent to your load balancer. Each log contains information such as the time
+    the request was received, the client's IP address, latencies, request paths, and
+    server responses. You can use these access logs to analyze traffic patterns and
+    troubleshoot issues. Access logging is an optional feature of Elastic Load Balancing
+    that is disabled by default.
+
+    ALB request tracing - You can use request tracing to track HTTP requests. The load
+    balancer adds a header with a trace identifier to each request it receives. Request
+    tracing will not help you to analyze latency specific data.
+
+CloudFront Considerations:
+    Exported Output Values in CloudFormation must have unique names within a single Region
+
+File Considerations:
+    appspec.yaml
+        CodeDeploy flow definition
+    .ebextensions/network-load-balancer.config
+        EB supporter located in any source code (agent)
+        Any resources created as part of your .ebextensions is part of your Elastic Beanstalk
+        template and will get deleted if the environment is terminated.
+
+Security and Performance tools of AWS
+    IAM Access Analyzer 
+        simplifies inspecting unused access to guide you toward least privilege. Security teams can use 
+        IAM Access Analyzer to gain visibility into unused access across their AWS organization and 
+        automate how they rightsize permissions. When the unused access analyzer is enabled, IAM Access 
+        Analyzer continuously analyzes your accounts to identify unused access and creates a centralized
+        dashboard with findings. The findings highlight unused roles, unused access keys for IAM users, 
+        and unused passwords for IAM users. For active IAM roles and users, the findings provide 
+        visibility into unused services and actions.
+
+    AWS Trusted Advisor
+        AWS Trusted Advisor is an online tool that provides you real-time guidance to help you provision
+        your resources following AWS best practices on cost optimization, security, fault tolerance, 
+        service limits, and performance improvement.
+
+    Amazon Inspector
+        Amazon Inspector is an automated security assessment service that helps improve the security 
+        and compliance of applications deployed on AWS. Amazon Inspector automatically assesses 
+        applications for exposure, vulnerabilities, and deviations from best practices.
+
+    AWS Security Hub
+        AWS Security Hub provides you with a comprehensive view of your security state in AWS and helps 
+        you assess your AWS environment against security industry standards and best practices.
+
+Region and AZ considerations:
+    EC2 Auto Scaling:
+        - An Auto Scaling group can contain EC2 instances in one or more Availability Zones within the
+        same Region.
+        - EC2 instances are created in subnets of a VPC
+        - EBS is AZ locked
+    RDS:
+        Read Replicas can be enabled with 3 options: within AZ, Cross AZ and Cross Region
+        Multi AZ is multi AZ
+    Redis:
+        Multi AZ Auto-Failover
+
+EC2 instances consideration:
+    User data:
+        user data is executed as root user (so no need to add sudo into shall)
+        by default, it is rerun once in boot cycle (no every restarted time, but you can set this feature)
+    ASG:
+        - if an instance is unhealthy in ASG, it will be terminated and a new one will be launched
+    EBS:
+        gp2/gp3: 1GB-16TB. IOPS:GB is dependently 3:1 means to reach max 16000 IOPS we set 5.3TB in gp2 while gp3 has
+            independence choice with the same 16000 IOPS max level.
+        io1: 4GB - 16TB, 100-64000 IOPS with rate of IOPS:GB as 50:1
+
+Billing Considerations:
+    AWS requires approximately 5 weeks of usage data to generate budget forecasts. If you set a budget
+    to alert based on a forecasted amount, this budget alert isn't triggered until you have enough
+    historical usage information.
+
+Life Hacks:
+    --dry-run: you can add this to shell script to check permission for this execution without executing
+
+DynamoDB:
+    Backups:
+        there are 2 backup options: on-demand (when you need) and point-in-time recovery (scheduled)
+        both method save the data in S3 bucket, HOWEVER you don't have access for the buckets
+        you cannot contact with them. If you want to backup data for the bucket which you can interact with 
+        you can use Datapipeline, EMR or Glue - ETL tools 

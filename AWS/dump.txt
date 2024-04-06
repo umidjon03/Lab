@@ -12,3 +12,30 @@
 79+73+131+126+234
 152+257+234 = 643
 643 / 5 = 130 or 2 h
+
+03.29.2024
+6 - x                   v
+24 - x (API GAteway)    v
+29 - _/ EBS security    v
+30 - x SQS              v
+38 - Burst balance      v
+43 - x SF               v
+45 - X S3 logs          v    
+46 - x RDS              v
+50 - x SAM vs CDK       v
+51 - x                  v
+52 - x EBS              v
+61 - KMS S3             v
+
+
+
+03.30.2024
+5
+45
+
+Secret manager
+Route table VPC
+cognito sync
+Instance store type
+
+pupple boy
