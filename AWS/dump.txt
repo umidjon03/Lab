@@ -38,4 +38,283 @@ Route table VPC
 cognito sync
 Instance store type
 
+AppConfig
+
 pupple boy
+
+326 A
+327 CE
+328 D          &C
+329 C
+330 D  X       &C
+331 B
+332 B
+333 B
+334 D
+335 A
+336 D           &A
+337 C | ec2 instance is not available to be assigned in S3 bucket policy
+338 B xx 
+339 CE
+340 D
+341 A           &C  OPEN 
+342 AB
+343 B
+344 AB xx       &BE
+345 A
+346 A W
+347 BD
+348 B
+349 C
+350 A X
+351 AE W        &AD
+352 B x         &D $ aws ec2 run-instance -- launch a new instance
+353 C           &D IoS is CloudFormation
+354 D
+355 A
+356 B x
+357 B x         &A
+358 D 
+359 C x
+360 A xx
+361 D           &A 
+362 CE xxx      &BC
+363 D
+364 D 
+365 A
+366 A    Attribute mapping is attributes that is required to sign to know user well. Cognito User Pool caches token but Lambda Authorizer caches the attribute value (Engineering in this case)
+367 D x
+368 A xx        &D  Step Functions Local (downloadable) helps to test Step Functions locally
+369 B x
+370 A
+371 C x         &B
+372 C xxx   Docker tag means just alias of an image, in this case image tag references to old image version
+373 B
+374 C x         &A
+375 B
+376 A x
+377 D           &B
+378 A (integration types in Gateway)
+379 A
+380 A
+381 D
+382 A
+383 A canary on API Gateway  &C OPEN
+384 C
+385 AC
+386 A
+387 A
+388 BE | A Proof of concept (POC) is the process of gathering evidence to support the feasibility of a project
+389 AB
+390 A dynamodb stream and ttl
+391 B       &C layers max size is 10GB and alternatively you can use EFS?S3 for elastic storage, but you can use lambda container for further storage and provisioned compute (ML libraries)
+392 A
+393 D
+394 B
+395 B
+396 A       &C default root object defines only root url called. we can use CloudFront function that appends index.html to the directory URL in viewer request 
+397 A
+398 B STS API   &D  OPEN GetSessionToken (also AssumeRole) to sign in with MFA
+399 BC
+400 A       &B
+401 B | when error is raised in a task, first goes to RETRY section after retry still error or there is no catcher, then error goes to CATCH. Then catch get data from error and invokes another error handler function. IF the error is still uncaught then the State Machine stops 
+402 D       
+403 D
+404 D X-ray annotations     OPEN
+405 A batch size /window    &C
+406 D       &A Configure AWS Secret Manager versions to store different copies of the same credentials across multiple environments
+407 AD
+408 A storage types
+409 D       &B
+410 D
+411 A
+412 BE      
+413 C x     &A
+414 A AppConfig and feature flags
+415 A CodePipeline Approval     &C Add manual approval to the existing stage (don't create new one, it is just a action in a stage)
+416 C       &A  | Retry er for re-invoke the errored func again or Catch er to invoke other error handler func
+417 D rotate strategy   &B | automatic rotation means invoking lambda func for rotation, managed means integrated services' (EDS, Aurora, ECS, Redshift) credential rotation. Single user means one user is in one secret key while alternating means there are 2 users, 2nd user plays as backoff role (keeps 0 downtime)
+418 C 
+419 A
+420 A CloudFormation references     &B | To let a resource (A) to know other resource's (B) property in CF template, try to assign the property as environment variable of the resource A 
+421 C
+422 B ACM multi region      &C | Certificates are region specific and cannot be imported from one region to another one
+423 D x
+424 C CF & SAM | SAM is not interchangeable with CloudFormation but a component of CF. You can specify AWS::Serverless-2016-10-31 in Transform section so that we can write SAM template syntax in the CloudFormation template
+425 C FIFO vs Standard dead-letter
+426 B 
+427 D
+428 A
+429 B (change set in SAM)
+430 A
+431 D
+432 A
+433 A
+434 A OAC
+435 C
+436 D
+437 D xxx
+438 A x     &B X-ray SDK should be installed in all needed services
+439 AE
+440 B
+441 D
+442 D
+443 D       &B | Mocking is good for testing API, but if you add GraphQL API the test will be more powerful
+
+
+All   118
+True  87    74%
+False 31    26%
+
+
+
+
+
+1    B  |   |  To invalidate cache by Cache-Control: max-age=<n> you need InvalidateCache policy attached 
+2    B  | D |  CAPABILITY_IAM (CAPABILITY_NAMED_IAM for named resource)
+3    C  | A |
+4    C  |   | RDS Proxy - do decrease connections by pooling them in a proxy
+5    A  | B | X To preserve everything as is, of course rollback must be disabled. --disable-rollback
+6    C  |   |
+7    B  | C | X 502 Error (API Gateway) - response from Lambda is not configured well
+8    B  | A | XXX 
+9    D  | A | Memcache - choose when test says multi-thread (core) or offloading traffic from main db, or your primary goal is caching object, or simplity, horizontally scalable. Redis is for long-lived, structured, sorted, dataset-rich caching system
+10   A  |   | $sam local -> start-api: starts local server for the API, start-lambda: starts lambda endpoint for upcoming invocations, invoke: one-time LF invocation, generate-event: generates event for a AWS Service as a Json 
+11   D  |   |   
+12   D  |   |
+13   D  |   |
+14   C  |   | dynamic reference - is looks like: AccessControl: '{{resolve:ssm:S3AccessControl:2}}' that tells CloudFormation to take parameter from SSM (ssm or ssm-secure) or Secrets Manager (secretsmanager)
+15   B  |   | AWS CDK custom resource is something that we specify in CloudFormation template in case that AWS CloudFormation does not provide the resources natively which aligns our needs. For example to delete automatically unused resources from stack we can just create a lambda function code that defines the same purpose and assign the code to LF in the named or custom resource
+16   C  |   | sam package -> sam deploy
+17   B  |   | 
+18   B  |   |
+19   A  |   |
+20   A  |   |
+21   C  | B | AWS-KMS for auditing keys
+22   AB |   |
+23   C  | B | XXX you can pass env values by environmentFiles or pass manual (in cmd) parameters with entryPoint
+24   B  |   |
+25   D  |   |
+26   A  |   |
+27   B  |   |
+28   A  |   |
+29   C  |   |
+30   A  |   |
+31   B  |   |
+32   AC | DE|
+33   A  |   |
+34   AB |   |
+35   B  |   |
+36   D  |   |
+37   C  |   |
+38   A  |   | XXx
+39   A  |   |
+40   B  | D | X
+41   B  |   |
+42   B  |   |
+43   C  |   |
+44   A  |   | X
+45   C  |   |
+46   B  |   | x
+47   D  | C | x
+48   C  |   | xx
+49   B  | D |
+50   C  |   |
+51   B  | A |
+52   A  |   |
+53   A  |   |
+54   C  |   |
+55   C  |   |
+56   D  | B | XXX
+57   AB | AE| X
+58   B  | D | X
+59   C  |   | L
+60   B  |   |
+61   BD |   |
+62   D  |   |
+63   A  | D | xxx custom resource
+64   B  | D | xxx AWS SAM Accelerate
+65   A  |   |
+
+True  46   69%
+False 19   31% FAIL
+
+
+66      |   |
+67      |   |
+68      |   |
+69      |   |
+70      |   |
+71      |   |
+72      |   |
+73      |   |
+74      |   |
+75      |   |
+76      |   |
+77      |   |
+78      |   |
+79      |   |
+80      |   |
+81      |   |
+82      |   |
+83      |   |
+84      |   |
+85      |   |
+86      |   |
+87      |   |
+88      |   |
+89      |   |
+90      |   |
+91      |   |
+92      |   |
+93      |   |
+94      |   |
+95      |   |
+96      |   |
+97      |   |
+98      |   |
+99      |   |
+100     |   |
+101     |   |
+102     |   |
+103     |   |
+104     |   |
+105     |   |
+106     |   |
+107     |   |
+108     |   |
+109     |   |
+110     |   |
+111     |   |
+112     |   |
+113     |   |
+114     |   |
+115     |   |
+116     |   |
+117     |   |
+118     |   |
+119     |   |
+120     |   |
+121     |   |
+122     |   |
+123     |   |
+124     |   |
+125     |   |
+126     |   |
+127     |   |
+128     |   |
+129     |   |
+130     |   |
+
+
+
+
+131     |   |
+132     |   |
+133     |   |
+134     |   |
+135     |   |
+136     |   |
+137     |   |
+138     |   |
+139     |   |

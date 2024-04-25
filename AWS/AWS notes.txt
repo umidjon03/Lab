@@ -121,6 +121,20 @@ EBS Multi Attach:
 - It looks like several applications are connected to a general EBS
 - All instances and volume should be in the same AZ
 
+Security:
+    - By default, the CMK that you selected when creating a volume encrypts the snapshots that
+    you make from the volume and the volumes that you restore from those encrypted snapshots.
+    You cannot remove encryption from an encrypted volume or snapshot, which means that a volume
+    restored from an encrypted snapshot, or a copy of an encrypted snapshot is always encrypted.
+
+    - You can configure your AWS account to enforce the encryption of the new EBS volumes and
+    snapshot copies that you create. Encryption by default is a Region-specific setting.
+    If you enable it for a Region, you cannot disable it for individual volumes or snapshots
+    in that Region.
+
+
+
+
 AIM
 - You can take a image by customizing an instance
 - or you can buy it from Amazon marketplace
@@ -197,7 +211,10 @@ to the EFS and EC2 (instance-sg-1 > instance | efs-sg-1 > efs) and they maintain
 - you cannot connect with your EFS without the rule (port is 2049)
 
 
-
+EFS Storage Classes
+    EFS Standard - default option provides SSD
+    EFS Infrequent Access (IA) - cost-optimized storage class that is accessed only a few times in a quarter
+    EFS Archive - A cost-optimized storage class for data that is accessed a few times each year or less
 
 
 -------------------------------------------------------------------------------------------------------------------------------
@@ -524,7 +541,7 @@ S3 CORS. Cross-Origin Resource Sharing
     is requesting another origin. If CORS is enabled you can successfully send get request. 
 
     ORIGIN = schema (protocol) + host + port
-    For example you request a html file from a web server and as a response the server reference another cross-origin 
+    For example you request a html file from a web server a  nd as a response the server reference another cross-origin 
         server. If CORS is enabled, the referenced server gives you a html without any problem
     CORS headers must be involved preflight response of the second server. If the client satisfy the headers, it send a http (e.g) request to the server
     In Amazon S3, if client makes a cross-origin request on a S3 bucket, we need to enable the correct CORS headers
@@ -561,7 +578,11 @@ Access Log
     Do NOT choose current bucket as a destination, else you waste credits by infinity log
     Your destination bucket's policy will be changed. 
 
-
+eventual VS strong consistency in S3:
+    - Bucket configurations have an eventual consistency model. If you delete a bucket and immediately list all buckets,
+    the deleted bucket might still appear in the list.
+    - Amazon S3 provides strong read-after-write consistency for PUTs and DELETEs of objects in your Amazon S3 bucket in
+    all AWS Regions. This applies to both writes to new objects as well as PUTs that overwrite existing objects and DELETEs.
 
 ------------------------------------------------------------------------------------------------------------------------
 -------------------------------------------------CloudFront-------------------------------------------------------------
@@ -636,9 +657,20 @@ Signed URL / Signed Cookies
     Signed url uses RSA key to encrypt. Field level Encryption, 
         - Edge location encrypts data by public key, and it is decrypted by private key in last step (EC2 instance) 
 
+Origin Failover:
+    - CloudFront routes all incoming requests to the primary origin, even when a previous request failed
+      over to the secondary origin. CloudFront only sends requests to the secondary origin after a request
+      to the primary origin fails.
+    
+    - CloudFront fails over to the secondary origin only when the HTTP method of the viewer request is GET,
+      HEAD, or OPTIONS. CloudFront does not failover when the viewer sends a different HTTP method (for example
+      POST, PUT, and so on).
 
+!!!!!!!!!NOTE
+    When CloudFront receives a request from a viewer (viewer request) and Before CloudFront returns the response to the
+    viewer (viewer response). Origin request and Origin response events are not supported for the CloudFront function.
 ------------------------------------------------------------------------------------------------
-===============================Encryption & Decryption==========================================
+=============================== Encryption & Decryption ==========================================
 ------------------------------------------------------------------------------------------------
 
 Encryption is changing the body of a data to plaint text (ciphertext) (by a E(*arg) function). Decryption is reverse of Encryption (a D(*arg))
@@ -893,6 +925,10 @@ Migration:
     You can prevision RDS in EB env but it is not good option for prod env as it is depend on EB
         keep separated RDS from EB. Protect DB from deletion
 
+Migrating ENVIRONMENT
+    to migrate an environment, for example, from one account (A) to another (B), just create "saved configuration"
+    in A and download it into your local, after making account-specific changes upload the configuration to S3 of
+    account B and go to B's Beanstalk Console and create the environment from 'Saved Configuration'
 
 
 ------------------------------------------------------------------------------------------------------------------------
@@ -1065,7 +1101,7 @@ Topic Publish vs Direct Publish (both are performed by SDK)
 For example multiple SQS queues should be notified about events but you can do it only a SQS in S3 bucket
     To tickle that, publish the event to SNS Topic and make multiple SQS queues as subscribers of the SNS topic
 
-FIFO is available in SNS as well (Group ID, Deduplication ID). You kan connect FIFO SNS with FIFO SQS
+FIFO is available in SNS as well (Group ID, Deduplication ID). You can connect FIFO SNS with FIFO SQS
 
 Message Filtering
     can apply a filter policy for one/multiple Consumers. No filter means all message
@@ -1946,6 +1982,9 @@ Table's capacity
         - Eventually Consistent Read (default)
             It is possible some data staling when requesting just after it is uploaded
             After, for example some milliseconds
+            If your application doesn't require strongly consistent reads, consider using
+                eventually consistent reads. Eventually consistent reads are cheaper and are
+                less likely to experience high latency.
         
         - Strongly Consistent Read
             No any data stale.
@@ -2523,6 +2562,14 @@ Caching
 Artifacts:
     which file in docker container should be sent to S3
 
+- You can push your Docker or Open Container Initiative (OCI) images to an Amazon ECR repository with
+  the docker push command.
+ 
+  Amazon ECR users require permission to call ecr:GetAuthorizationToken before they can authenticate to
+  a registry and push or pull any images from any Amazon ECR repository. Amazon ECR provides several
+  managed policies to control user access at varying levels
+
+
 @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ CodeDeploy @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 Deployment service that automates application deployment v1 -> v2
 New version may be deployed to EC2 Instances, On-premises, Lambda functions or ECS Services
@@ -2551,6 +2598,21 @@ CodeDeploy with EC2/On-premises
         For example permission to S3 to get deployment bundles (.zip contains new version)
 
         Go ./Lab.txt file for hands on
+
+CodeDeploy Deployment Groups
+    Well, you have developed CodeDeploy for an instance that deploys, rollbacks, and does other 
+    functionalities but what if the deployment need to be compute-specific? For example for EC2_1
+    instance you need to do different configuration for deploying. In this case You can specify one
+    or more deployment groups for a CodeDeploy application. The deployment group contains settings
+    and configurations used during the deployment. Most deployment group settings depend on the compute
+    platform used by your application. Some settings, such as rollbacks, triggers, and alarms can 
+    be configured for deployment groups for any compute platform.
+
+
+CodeDeploy Hooks:
+    Hooks are found in the AppSpec file used by AWS CodeDeploy to manage deployment. Hooks correspond to 
+    lifecycle events such as ApplicationStart, ApplicationStop, etc. to which you can assign a script.
+
 Lambda:
     Can help you to automate traffic shift for Lambda aliases
     this is integrated within the SAM frameworks
@@ -2569,9 +2631,7 @@ ECS:
     Code Deploy change the route to the new ECS Task Definition step-by-step
     
     Only Blue / Green Deployment is available
-    And increment method are Linear, Canary, AllAtOnce
-
-@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Others @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+    And increment method are Linear, Canary, AllAtOnce@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@ Others @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
 
 CodeStar
     just creates CI/CD project
@@ -2590,7 +2650,7 @@ CodeGuru
     To use install its Agent on your machine
 
 Cloud9
-    Cloud-based IDE (like. VS Code)
+    Cloud-based IDE (like VS Code)
     Code editor, debugger, terminal in a browser
     Share yor development env with your team
     Integrated with AWS SAM & Lambda to easily build serverless apps
@@ -2669,7 +2729,7 @@ It generates cdk-based template for you
 So start defining stacks in the python file (it is created with template like "Cdkappstack")
 in the folder of python files you can create python files which each contains a stack 
 so a stack contains many services as you want
-After defining all services and stacks back to amin folder and create app.py file 
+After defining all services and stacks back to admin folder and create app.py file 
 which says to CDK: hey generate CloudFormation template according to me
 why app.py? because it is written in cdk.json file which is backbone of CF template
 When you command `$ cdk synth` (do it in main folder) it goes to cdk.json and the json
@@ -3485,17 +3545,35 @@ Security and Performance tools of AWS
         AWS Security Hub provides you with a comprehensive view of your security state in AWS and helps 
         you assess your AWS environment against security industry standards and best practices.
 
+    CloudFront Authentication with Cognito:
+        You cannot directly integrate Cognito User Pools with CloudFront distribution as
+        you have to create a separate Lambda@Edge function to accomplish the authentication 
+        via Cognito User Pools. This involves additional development effort, so this option
+        is not the best fit for the given use-case.
+
+
+
 Region and AZ considerations:
     EC2 Auto Scaling:
         - An Auto Scaling group can contain EC2 instances in one or more Availability Zones within the
         same Region.
         - EC2 instances are created in subnets of a VPC
         - EBS is AZ locked
+        - Encryption can be set Regionally so EBS in that region is always encrypted
     RDS:
         Read Replicas can be enabled with 3 options: within AZ, Cross AZ and Cross Region
         Multi AZ is multi AZ
     Redis:
         Multi AZ Auto-Failover
+
+    Secret Manager
+        Can be replicated to other region along with DB or etc 
+    
+    ACM:
+        Certificates are region specific and cannot be imported from one region to another one
+
+    EFS
+        Can be regional (in min 3 AZs in a region) or One-Zone in an AZ
 
 EC2 instances consideration:
     User data:
@@ -3522,3 +3600,48 @@ DynamoDB:
         both method save the data in S3 bucket, HOWEVER you don't have access for the buckets
         you cannot contact with them. If you want to backup data for the bucket which you can interact with 
         you can use Datapipeline, EMR or Glue - ETL tools 
+
+
+CDK:
+    Use CDK assertion module to integrate unit tests with the app, that run after code
+                                                                        git commit
+    
+    
+    By CDK Aspects class you can specify rules that if not passed the stack is not
+                                                                gonna being synth ed
+
+Short notes
+    SQS has 'maximum concurrency' feature. can be set according to processors' capacity
+
+Agents:
+    CloudWatch agent
+    CodeDeploy agent (on each instances)
+    CodeBuild agent (to test codedeploy)
+    ECS agent (makes ec2 instance as container host)
+    CodeGuru agent
+    X-RAY agent (sidecar for Fargate)
+ELB
+    By default, the health check configuration of your Auto Scaling group is set as an EC2 type that performs
+    a status check of EC2 instances. To automate the replacement of unhealthy EC2 instances, you must change
+    the health check type of your instance's Auto Scaling group from EC2 to ELB by using a configuration file.
+
+    How ALB works?:
+        Route53 --(HTTP)--> ALB --(HTTP)->  Listener_for_port_80  -> Listener rule -> Target_group_1 (target group is chosen by listener based on listener rule among one or several rules. If no rule is match the traffic is routed to default target)
+               \           /   \_-(HTTPS)-> Listener_for_port_443 -> Listener rule -> Target_group_2
+                |-(HTTPS)-/ 
+
+ERRORS:
+    - HTTP 503 - HTTP 503 indicates 'Service unavailable' error. This error in ALB is an indicator of
+    the target groups for the load balancer having no registered targets.
+
+    - HTTP 500 - HTTP 500 indicates 'Internal server' error. There are several reasons for their error:
+    A client submitted a request without an HTTP protocol, and the load balancer was unable to generate
+    a redirect URL, there was an error executing the web ACL rules.
+
+    - HTTP 504 - HTTP 504 is 'Gateway timeout' error. Several reasons for this error, to quote a few: 
+    The load balancer failed to establish a connection to the target before the connection timeout 
+    expired, The load balancer established a connection to the target but the target did not respond 
+    before the idle timeout period elapsed.
+
+    - HTTP 403 - HTTP 403 is 'Forbidden' error. You configured an AWS WAF web access control list (web ACL) 
+    to monitor requests to your Application Load Balancer and it blocked a request.
