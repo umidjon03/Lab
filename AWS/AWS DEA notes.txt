@@ -1,0 +1,3 @@
+S3:
+    you can create destination bucket and replicate objects to this bucket
+    by creating replication rule (Management section)

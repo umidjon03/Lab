@@ -1,0 +1,430 @@
+Activity ID	Resource	Number
+1	Concreters	2
+1	Ready-mix concrete	100
+2	Builders	4
+3	Builders	2
+3	Decorators	3
+4	Decorators	5
+4	Mechanical and Electrical	6
+5	Builders	2
+5	Mobile crane	1
+6	Concreters	3
+6	Ready-mix concrete	100
+7	Builders	4
+8	Builders	2
+8	Decorators	2
+9	Decorators	6
+9	Mechanical and Electrical	7
+10	Builders	2
+10	Mobile crane	2
+11	Concreters	3
+11	Ready-mix concrete	100
+12	Builders	5
+13	Builders	2
+13	Decorators	4
+14	Decorators	4
+14	Mechanical and Electrical	7
+15	Builders	1
+16	Concreters	2
+16	Ready-mix concrete	100
+17	Builders	3
+18	Builders	2
+18	Decorators	4
+19	Decorators	6
+19	Mechanical and Electrical	5
+20	Builders	1
+21	Concreters	3
+21	Ready-mix concrete	100
+22	Builders	3
+23	Builders	3
+23	Decorators	2
+24	Decorators	4
+24	Mechanical and Electrical	6
+25	Builders	2
+25	Mobile crane	2
+26	Concreters	2
+26	Ready-mix concrete	100
+27	Builders	5
+28	Builders	2
+28	Decorators	3
+29	Decorators	6
+29	Mechanical and Electrical	5
+30	Builders	1
+31	Concreters	2
+31	Ready-mix concrete	100
+32	Builders	4
+33	Builders	2
+33	Decorators	4
+34	Decorators	4
+34	Mechanical and Electrical	6
+35	Builders	2
+35	Mobile crane	1
+36	Concreters	3
+36	Ready-mix concrete	100
+37	Builders	3
+38	Builders	1
+38	Decorators	2
+39	Decorators	4
+39	Mechanical and Electrical	7
+40	Builders	1
+41	Concreters	1
+41	Ready-mix concrete	100
+42	Builders	5
+43	Builders	3
+43	Decorators	2
+44	Decorators	5
+44	Mechanical and Electrical	5
+45	Builders	3
+45	Mobile crane	2
+46	Concreters	2
+46	Ready-mix concrete	100
+47	Builders	4
+48	Builders	1
+48	Decorators	3
+49	Decorators	5
+49	Mechanical and Electrical	5
+50	Builders	1
+50	Mobile crane	2
+51	Concreters	3
+51	Ready-mix concrete	100
+52	Builders	5
+53	Builders	2
+53	Decorators	4
+54	Decorators	5
+54	Mechanical and Electrical	5
+55	Builders	2
+55	Mobile crane	2
+56	Concreters	3
+56	Ready-mix concrete	100
+57	Builders	4
+58	Builders	1
+58	Decorators	4
+59	Decorators	6
+59	Mechanical and Electrical	6
+60	Builders	2
+61	Concreters	1
+61	Ready-mix concrete	100
+62	Builders	3
+63	Builders	3
+63	Decorators	3
+64	Decorators	4
+64	Mechanical and Electrical	7
+65	Builders	3
+65	Mobile crane	1
+66	Concreters	1
+66	Ready-mix concrete	100
+67	Builders	3
+68	Builders	3
+68	Decorators	4
+69	Decorators	6
+69	Mechanical and Electrical	7
+70	Builders	3
+70	Mobile crane	1
+71	Concreters	1
+71	Ready-mix concrete	100
+72	Builders	4
+73	Builders	1
+73	Decorators	4
+74	Decorators	5
+74	Mechanical and Electrical	6
+75	Builders	1
+75	Mobile crane	2
+76	Concreters	3
+76	Ready-mix concrete	100
+77	Builders	4
+78	Builders	1
+78	Decorators	2
+79	Decorators	5
+79	Mechanical and Electrical	6
+80	Builders	1
+81	Concreters	2
+81	Ready-mix concrete	100
+82	Builders	3
+83	Builders	3
+83	Decorators	3
+84	Decorators	5
+84	Mechanical and Electrical	6
+85	Builders	1
+85	Mobile crane	2
+86	Concreters	3
+86	Ready-mix concrete	100
+87	Builders	4
+88	Builders	2
+88	Decorators	2
+89	Decorators	4
+89	Mechanical and Electrical	6
+90	Builders	2
+91	Concreters	2
+91	Ready-mix concrete	100
+92	Builders	5
+93	Builders	3
+93	Decorators	3
+94	Decorators	4
+94	Mechanical and Electrical	6
+95	Builders	2
+96	Concreters	2
+96	Ready-mix concrete	100
+97	Builders	5
+98	Builders	1
+98	Decorators	4
+99	Decorators	6
+99	Mechanical and Electrical	6
+100	Builders	3
+100	Mobile crane	1
+101	Concreters	2
+101	Ready-mix concrete	100
+102	Builders	3
+103	Builders	1
+103	Decorators	2
+104	Decorators	6
+104	Mechanical and Electrical	7
+105	Builders	3
+105	Mobile crane	1
+106	Concreters	2
+106	Ready-mix concrete	100
+107	Builders	4
+108	Builders	1
+108	Decorators	4
+109	Decorators	5
+109	Mechanical and Electrical	7
+110	Builders	3
+110	Mobile crane	1
+111	Concreters	1
+111	Ready-mix concrete	100
+112	Builders	4
+113	Builders	1
+113	Decorators	4
+114	Decorators	5
+114	Mechanical and Electrical	7
+115	Builders	3
+115	Mobile crane	1
+116	Concreters	2
+116	Ready-mix concrete	100
+117	Builders	3
+118	Builders	2
+118	Decorators	2
+119	Decorators	4
+119	Mechanical and Electrical	5
+120	Builders	2
+121	Concreters	3
+121	Ready-mix concrete	100
+122	Builders	4
+123	Builders	1
+123	Decorators	4
+124	Decorators	6
+124	Mechanical and Electrical	5
+125	Builders	3
+126	Concreters	2
+126	Ready-mix concrete	100
+127	Builders	4
+128	Builders	3
+128	Decorators	3
+129	Decorators	4
+129	Mechanical and Electrical	7
+130	Builders	1
+130	Mobile crane	1
+131	Concreters	3
+131	Ready-mix concrete	100
+132	Builders	4
+133	Builders	3
+133	Decorators	2
+134	Decorators	6
+134	Mechanical and Electrical	6
+135	Builders	2
+135	Mobile crane	1
+136	Concreters	2
+136	Ready-mix concrete	100
+137	Builders	3
+138	Builders	2
+138	Decorators	3
+139	Decorators	4
+139	Mechanical and Electrical	6
+140	Builders	2
+141	Concreters	2
+141	Ready-mix concrete	100
+142	Builders	3
+143	Builders	3
+143	Decorators	2
+144	Decorators	4
+144	Mechanical and Electrical	6
+145	Builders	1
+145	Mobile crane	1
+146	Concreters	2
+146	Ready-mix concrete	100
+147	Builders	4
+148	Builders	3
+148	Decorators	2
+149	Decorators	5
+149	Mechanical and Electrical	6
+150	Builders	2
+150	Mobile crane	2
+151	Concreters	1
+151	Ready-mix concrete	100
+152	Builders	5
+153	Builders	1
+153	Decorators	3
+154	Decorators	4
+154	Mechanical and Electrical	7
+155	Builders	2
+156	Concreters	1
+156	Ready-mix concrete	100
+157	Builders	4
+158	Builders	1
+158	Decorators	3
+159	Decorators	5
+159	Mechanical and Electrical	6
+160	Builders	2
+161	Concreters	1
+161	Ready-mix concrete	100
+162	Builders	5
+163	Builders	1
+163	Decorators	2
+164	Decorators	6
+164	Mechanical and Electrical	6
+165	Builders	1
+165	Mobile crane	2
+166	Concreters	1
+166	Ready-mix concrete	100
+167	Builders	3
+168	Builders	1
+168	Decorators	4
+169	Decorators	6
+169	Mechanical and Electrical	7
+170	Builders	2
+170	Mobile crane	1
+171	Concreters	2
+171	Ready-mix concrete	100
+172	Builders	4
+173	Builders	1
+173	Decorators	3
+174	Decorators	6
+174	Mechanical and Electrical	5
+175	Builders	3
+176	Concreters	3
+176	Ready-mix concrete	100
+177	Builders	3
+178	Builders	1
+178	Decorators	2
+179	Decorators	5
+179	Mechanical and Electrical	5
+180	Builders	1
+181	Concreters	2
+181	Ready-mix concrete	100
+182	Builders	5
+183	Builders	3
+183	Decorators	4
+184	Decorators	6
+184	Mechanical and Electrical	6
+185	Builders	3
+185	Mobile crane	2
+186	Concreters	2
+186	Ready-mix concrete	100
+187	Builders	4
+188	Builders	1
+188	Decorators	3
+189	Decorators	6
+189	Mechanical and Electrical	6
+190	Builders	1
+191	Concreters	1
+191	Ready-mix concrete	100
+192	Builders	4
+193	Builders	2
+193	Decorators	3
+194	Decorators	6
+194	Mechanical and Electrical	7
+195	Builders	2
+196	Concreters	3
+196	Ready-mix concrete	100
+197	Builders	5
+198	Builders	2
+198	Decorators	3
+199	Decorators	5
+199	Mechanical and Electrical	6
+200	Builders	1
+201	Concreters	1
+201	Ready-mix concrete	100
+202	Builders	3
+203	Builders	3
+203	Decorators	2
+204	Decorators	5
+204	Mechanical and Electrical	6
+205	Builders	3
+205	Mobile crane	1
+206	Concreters	2
+206	Ready-mix concrete	100
+207	Builders	4
+208	Builders	1
+208	Decorators	2
+209	Decorators	4
+209	Mechanical and Electrical	5
+210	Builders	1
+211	Concreters	2
+211	Ready-mix concrete	100
+212	Builders	3
+213	Builders	1
+213	Decorators	4
+214	Decorators	4
+214	Mechanical and Electrical	7
+215	Builders	2
+215	Mobile crane	2
+216	Concreters	2
+216	Ready-mix concrete	100
+217	Builders	4
+218	Builders	2
+218	Decorators	4
+219	Decorators	4
+219	Mechanical and Electrical	5
+220	Builders	1
+220	Mobile crane	2
+221	Concreters	2
+221	Ready-mix concrete	100
+222	Builders	3
+223	Builders	2
+223	Decorators	3
+224	Decorators	4
+224	Mechanical and Electrical	5
+225	Builders	3
+225	Mobile crane	1
+226	Concreters	3
+226	Ready-mix concrete	100
+227	Builders	5
+228	Builders	2
+228	Decorators	4
+229	Decorators	6
+229	Mechanical and Electrical	5
+230	Builders	2
+230	Mobile crane	1
+231	Concreters	3
+231	Ready-mix concrete	100
+232	Builders	5
+233	Builders	3
+233	Decorators	4
+234	Decorators	6
+234	Mechanical and Electrical	7
+235	Builders	3
+235	Mobile crane	2
+236	Concreters	1
+236	Ready-mix concrete	100
+237	Builders	4
+238	Builders	3
+238	Decorators	2
+239	Decorators	4
+239	Mechanical and Electrical	7
+240	Builders	3
+241	Concreters	3
+241	Ready-mix concrete	100
+242	Builders	5
+243	Builders	3
+243	Decorators	3
+244	Decorators	4
+244	Mechanical and Electrical	5
+245	Builders	3
+246	Concreters	1
+246	Ready-mix concrete	100
+247	Builders	4
+248	Builders	1
+248	Decorators	2
+249	Decorators	6
+249	Mechanical and Electrical	6
+250	Builders	2
+250	Mobile crane	1

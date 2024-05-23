@@ -396,7 +396,7 @@ VPC Endpoints
         - via VPC Endpoint Gateway   - for S3 and DynamoDB
         - via VPC Endpoint Interface - the rest
     In that case you will connect to the EC2 privately, securely, within the VPC, without latency. 
-        That is why you need to use VPC endpoints instead of connecting from outside (www) via NET Gateway (etc)
+        That is why you need to use VPC endpoints instead of connecting from outside (www) via NAT Gateway (etc)
 
 Connecting to VPC
     - Site to site VPN
@@ -409,9 +409,103 @@ Connecting to VPC
         - Goes through a private network
         - Takes at least a months to establishing
     
+++++++++++++++++++++++++++++++ VPC Recap ++++++++++++++++++++++++++++++++++++++++++++
+Private Connection? 
+In your house there is computers connected with cables and there is no internet
+    Even though your enemy is the greatest hacker, he cannot enter your computers
+    as it is not connected to internet. A random computer in your private network
+    is not accessible for any outside computers.
 
+In AWS, we can get our private connection too. But computers is not connected by 
+    cables and we can assume that they are connected virtually which is managed
+    by AWS
 
+Let's assume that our AWS account is another planet that is given to you
+    And it is divided into 10 regions by rivers and AWS serves each region
+    differently. And each region has isolated buildings that stores physical
+    computing nodes and all data belong to this building's inhabitants (services)
+    Inhabitant can be EC2 instances and the identical inhabitant can be copied to another
+    building (Availability Zone) to ensure that the inhabitant survives even the first
+    building is bombed
 
+But how the services in AZs are connected? Is there any cables? Or another by internet?
+    Everything (there are exceptions like s3) in a region is connected via VPC.
+    VPC is region based service that makes services interconnected with other services
+    (AWS or other). AZ in the region is given one or more Subnet from the VPC
+
+    Inside VPC you will get your own IP ranges that is given you privately. And the IPs
+    are provided to VPC services. The IPs are called Private IP. With that IP yuu can 
+    connect with services inside VPC. The IPs is distributed across subnets of VPC.
+    So we can assume that services in the building can be connected via cables now. 
+    An EC2 instances get IP address form the range for example 
+
+    Inside region we can create firewalls or Security Groups that allow or block 
+        inbound and outbound traffics from/to an attached service. Lets say we have 2 
+        EC2 instances in 2 subnets, and they do the sane functionalities. So they are 
+        be attached to the same security group which aligns both instance's security needs
+
+        Or we can build more general firewall NACL. Subnets are attached to a NACL and 
+        it contains basically allows for the subnet. SG is more granular than NACL,
+        but still if you wanna set some firewall rules for your subnet, you can create
+        NACL in your VPC and attach your subnet to the NACL (Network Access Control List)
+
+        NACL is stateless SG is stateful. if you define rule in inbound no need do the same 
+        thing for outbound in SG bcs it is stateful. But in case of NACL you must define 
+        both separately
+
+    So far, we have seen allow/block cases. For example we can allow set rule to out
+        subnet or ec2 instance. Very good. But there is one question: Is the traffic can be
+        routed actually? this is another problem. Let's say your computer is connected to 
+        subnet and is GRANTED to connect with Computer B. But is there any cable to establish 
+        the connection physically? It is another problem.
+
+        In this case, we define another characteristic: Route Table. Like NACl it is created 
+        and attached to one or more subnets. traffics from a subnet is routed according
+        to its Route Table. If there is rule that defines the target IP (range), your 
+        traffics are routed without any problem.
+
+        There is misunderstanding about Public and Private subnets. the only difference is 
+        with only their route tables. Public one just contains internet IP as destination,
+        IGW as target. Route table routes to specified destination of specified target
+        No services inside Private Subnet can go internet even though they have Public IP.
+        
+        But what if rarely the services need for internet (like software update)? 
+        Meet with NAT (Network Address Transaction) Gateway. It is something created
+        in Public Subnet with its IP, and can route the received traffic internet.
+        But from where tf traffic come from? From private subnet of course. You must define
+        NATG's IP in Route table of private subnet. So services in private subnet make 
+        indirect request to internet (other planet). Note that it is only for outbound
+
+        GATEWAY - is something routes a traffic from one network to another one (IGW, NAT GW)
+        Software Update request -> SG --allows--> Rote table ---routes--> NAT ---
+                ---> Route table ----> IGW ---> Internet==> Updates are downloaded!!!
+
+        WTF is IGW? It is Internet Gateway in our VPC that can leads us to other Planet's
+            objects. You can assume it as magical gate that routes you to Internet.
+            Route table routes you to IGW to access internet. You can assume it also
+            as your home gate that through that can bring other homes' cables
+
+        Wait, fully understand that if private service need of public internet, it routes 
+            traffic it IGW via NAT Gateway, but what about price, availability and security 
+            of the NAT? Can't we access directly and also privately from/to private services?
+            And main point is that to connect with non-VPC services of AWS (S3, SNS, etc) must 
+            we connect with external internet with IGW eventhough the traffic comes back To
+            AWS itself? Meet with VPC ENDPOINTS. 
+
+            VPC Endpoint is created in VPC and has its own Security Group. To allow download 
+            updates from S3, you have to add Endpoint's SG to your instance's SG' outbound rule
+            and as well as do the same thing for Endpoint's SG but not for out but inbound traffic.
+            You you can connect with S3 without leaving from AWS Cloud. (Don't forget abt Route Table
+            of the service's subnet, it must route to VPCE target -> s3.amazonaws.com destination. 
+            bUT DEFAULT settings allows all kind of local traffic flow)
+
+            Interface Endpoint provisions ENIs in each selected subnets and connection is established 
+            through it. But Gateway Endpoint receive traffic from Route table and sends it to supported 
+            service: S3 or DynamoDB only
+
+        ENI. Elastic Network Interface is looks like a tool which has its own private, public, elastic
+        IP and MAC addresses. you can create it and attach to one instance as secondary network. 
+        and you can easily detach from the instance and attach to another one. 
 
 
 ------------------------------------------------------------------------------------------------
@@ -495,7 +589,7 @@ S3 Storage Classes: (By life cycle you can automate changing btw storage classes
         - Infrequent access tier                    : not accessed for 30 days
         - Archive Instant access tier               : not accessed for 90 days
         - Archive Access tier (optional)            : configurable from 90 to 700+ days
-        - Deep Archive Access tier (optional)        : configurable from 180 to 700+ days
+        - Deep Archive Access tie r (optional)        : configurable from 180 to 700+ days
 
 
 S3 Lifecycle Rules: (Go bucket's Management section)

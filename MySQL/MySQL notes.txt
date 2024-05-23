@@ -1,0 +1,497 @@
+------------------------- MySQL Architecture ------------------------------------
+
+There are 3 layer in MySQL:
+    - Utility
+    - SQL
+    - Storage Engine
+
+    
+Utility Layer: (I)
+    Networking, query parsing, authorization processes are hold in this layer 
+    
+    Client/User Protocol:
+        The first part is connections pool, communication will be based on Client/User protocol
+        According to this protocol, there is no flow control meaning when one side sends message
+        the other side must fetch entire message before responding. 
+        
+        Everything is simple, one side sends message to another side, and another fetches and processes the message
+        and send response / log. Cannot be kinda partial responses. That is why LIMIT clause is so important
+    ||
+    \/
+    Parser:
+        After establishing fetching, the message (query) comes into PARSER section, which interpret & validate query 
+    
+    ||
+    \/
+    Check Permission:
+        In this section engine checks if the user have proper permission to do these actions
+    ____
+    ||||
+    ||||
+   \    /
+    \  /
+     \/
+SQL Layer (II):
+     Rewriter:
+        Beginning of the layer, Rewriter section takes tokened/parsed query and rewrite it 
+        based on predefined rules of MySQL, for example if the source is VIEW, the underlaid tables are
+        replaced as a resource
+    ||
+    \/    
+    Optimizer:
+        Then flow comes to optimizer. Based on metrics/statistics optimizer predicts cost (not speed) of
+        possible solutions (scanning full table, use temp table, index lookup, etc) and chooses an option
+        with lowest cost. But Optimizer does not choose always the best option, because storage engines don't
+        always give accurate stats. For example, InnoDB gives inaccurate stats about row number of table
+        You can give hints to optimizer like adding indexes, redesigning schema, etc. After all optimizer
+        gives a execution plan to EXECUTER
+    ||
+    \/ 
+    Executor:
+        Executor stage just execute which it is written in execution plan 
+    
+        !!! After this stage MySQL reply to the client, about affected rows number even though no totally completed 
+    ____
+    ||||
+    ||||
+   \    /
+    \  /
+     \/
+Storage Engine Layer (III):
+    This layer contains many Storage Engines responsible for storing and retrieving data
+    They are connected through plugins to executer easily switch btw engines
+
+
+----------------------------- Secondary Indexes ---------------------------
+""""""Stackoverflow  (https://stackoverflow.com/questions/3567981/how-do-mysql-indexes-work)
+
+The first thing you must know is that indexes are a way to avoid scanning the full
+table to obtain the result that you're looking for.
+
+There are different kinds of indexes and they're implemented in the storage layer,
+so there's no standard between them and they also depend on the storage engine 
+that you're using.
+
+InnoDB and the B+Tree index
+    For InnoDB, the most common index type is the B+Tree based index, that stores the
+    elements in a sorted order. Also, you don't have to access the real table to get
+    the indexed values, which makes your query return way faster.
+
+    The "problem" about this index type is that you have to query for the leftmost
+    value to use the index. So, if your index has two columns, say last_name and
+    first_name, the order that you query these fields matters a lot.
+
+    So, given the following table:
+
+    CREATE TABLE person (
+        last_name VARCHAR(50) NOT NULL,
+        first_name VARCHAR(50) NOT NULL,
+        INDEX (last_name, first_name)
+    );
+
+    This query would take advantage of the index:
+        SELECT last_name, first_name FROM person
+        WHERE last_name = "John" AND first_name LIKE "J%"
+
+    But the following one would not:
+        SELECT last_name, first_name FROM person WHERE first_name = "Constantine"
+        Because you're querying the first_name column first and it's not the leftmost column in the index.
+
+    This last example is even worse:
+        SELECT last_name, first_name FROM person WHERE first_name LIKE "%Constantine"
+    Because now, you're comparing the rightmost part of the rightmost field in the index.
+
+The hash index
+    This is a different index type that unfortunately, only the memory backend supports. It's
+    lightning fast but only useful for full lookups, which means that you can't use it for
+    operations like >, < or LIKE.
+
+    Since it only works for the memory backend, you probably won't use it very often. The main
+    case I can think of right now is the one that you create a temporary table in the memory
+    with a set of results from another select and perform a lot of other selects in this
+    temporary table using hash indexes.
+
+    If you have a big VARCHAR field, you can "emulate" the use of a hash index when using
+    a B-Tree, by creating another column and saving a hash of the big value on it. Let's
+    say you're storing a url in a field and the values are quite big. You could also create 
+    an integer field called url_hash and use a hash function like CRC32 or any other hash
+    function to hash the url when inserting it. And then, when you need to query for this
+    value, you can do something like this:
+        SELECT url FROM url_table WHERE url_hash=CRC32("http://gnu.org");
+
+    The problem with the above example is that since the CRC32 function generates a quite small
+    hash, you'll end up with a lot of collisions in the hashed values. If you need exact values, 
+    you can fix this problem by doing the following:
+        SELECT url FROM url_table 
+        WHERE url_hash=CRC32("http://gnu.org") AND url="http://gnu.org";
+    
+    It's still worth to hash things even if the collision number is high cause you'll only perform
+    the second comparison (the string one) against the repeated hashes.
+
+    Unfortunately, using this technique, you still need to hit the table to compare the url field.
+
+Wrap up
+    Some facts that you may consider every time you want to talk about optimization:
+        Integer comparison is way faster than string comparison. It can be illustrated
+        with the example about the emulation of the hash index in InnoDB.
+
+        Maybe, adding additional steps in a process makes it faster, not slower. It can be
+        illustrated by the fact that you can optimize a SELECT by splitting it into two steps,
+        making the first one store values in a newly created in-memory table, and then execute
+        the heavier queries on this second table.
+
+    MySQL has other indexes too, but I think the B+Tree one is the most used ever and
+    the hash one is a good thing to know, but you can find the other ones in the MySQL documentation.
+
+    I highly recommend you to read the "High Performance MySQL" book, the answer above was definitely
+    based on its chapter about indexes.
+
+""""""
+
+Any other index that is not PK.
+to get result server scan either full scan or just through index
+
+`alter table <table-name> add index <idx-name>(<idex-field1>, <...>)`
+OR
+`CREATE (UNIQUE) INDEX <idx-name> ON <table-name>(<idex-field1>, <...>)`
+
+Why add index:  
+    Reduce scanned rows:
+        Server scan only small number of rows if filter is based on index field
+        index files  
+    Sort:
+        Indexes are stored in way of ordered 
+    Validate Data:
+        We can assign a unique index to store only distinct data in a column
+    Find Min/Max values:
+        index optimizes some aggregate functions on base column data
+
+When should indexes be added or removed?
+    There are statistical views in sys schema which we should consider before indexing
+        SELECT * FROM sys.schema_tables_with_full_table_scans; -- view that retrieves stats (# rows scanned, latency) about all full (SELECT *) scanned tables, stats is grouped by (schema, table)
+        SELECT * FROM sys.statements_with_full_table_scans; -- this retrieves statistics grouped by each UNIQUE query statement
+
+    Removing Index:
+        `SELECT * FROM sys.schema_unused_indexes;` -- find out unused indexes
+        `SELECT * FROM sys.schema_redundant_indexes;`-- find out redundant indexes
+
+BUT sometimes index may not filter out beneficial percentage of rows, so,
+after getting approximate statistics from Storage Engine, OPTIMIZER decide 
+is it worth index way to pick
+
+
+Index is saved is B-Tree, Nodes with no children are called Leaf Nodes
+
+InnoDB takes sample index pages (index page is leaf nodes of an index) and calculates number of items for per index
+    Pay attention!!! It does not calculate all index but takes SAMPLE. How many index pages is taken as a sample?
+    You can see that from global variables of INNODB_STATS_PERSISTENT_SAMPLE_PAGES and  INNODB_STATS_TRANSIENT_SAMPLE_PAGE
+    BUT you can adjust the variables per table individually by adding this scripts parameter during creation:
+    STATS_SAMPLE_PAGE = 25. More pages, more accurate statistics and also more cost.
+
+"""""""""" High Performance MySQL book
+Suppose you have the following table:
+CREATE TABLE People (
+ last_name varchar(50) not null,
+ first_name varchar(50) not null,
+ dob date not null,
+ key(last_name, first_name, dob)
+);
+
+Match the full value
+    A match on the full key value specifies values for all columns in the index. For
+    example, this index can help you find a person named Cuba Allen who was born
+    on 1960-01-01.
+
+Match a leftmost prefix
+    This index can help you find all people with the last name Allen. This uses only
+    the first column in the index.
+Match a column prefix
+    You can match on the first part of a column’s value. This index can help you find
+    all people whose last names begin with J. This uses only the first column in the
+    index.
+Match a range of values
+    This index can help you find people whose last names are between Allen and
+    Barrymore. This also uses only the first column.
+Match one part exactly and match a range on another part
+    This index can help you find everyone whose last name is Allen and whose first
+    name starts with the letter K (Kim, Karl, etc.). This is an exact match on
+    last_name and a range query on first_name.
+Index-only queries
+    B-tree indexes can normally support index-only queries, which are queries that
+    access only the index, not the row storage. We discuss this optimization in “Cov‐
+    ering Indexes” on page 178.
+
+Index types:
+    - B-Tree (technically B+ Tree for InnoDB, T-tree for NDB Cluster)
+    - Hash Index
+    - Full-text indexes
+        FULLTEXT is a special type of index that finds keywords in the text instead of compar‐
+        ing values directly to the values in the index. Full-text searching is completely differ‐
+        ent from other types of matching. It has many subtleties, such as stop words,
+        stemming, plurals, and Boolean searching. It is much more analogous to what a
+        search engine does than to simple WHERE parameter matching.
+        Having a full-text index on a column does not eliminate the value of a B-tree index
+        on the same column. Full-text indexes are for MATCH AGAINST operations, not ordi‐
+        nary WHERE clause operations.
+    - Prefix Indexes
+        You can often save space and get good performance by indexing the first few charac‐
+        ters instead of the whole value. This makes your indexes use less space, but it also
+        makes them less selective. Index selectivity is the ratio of the number of distinct
+        indexed values (the cardinality) to the total number of rows in the table (#T), and it
+        ranges from 1/#T to 1. A highly selective index is good because it lets MySQL filter
+        out more rows when it looks for matches. A unique index has a selectivity of 1, which
+        is as good as it gets.
+
+        The trick is to choose a prefix that’s long enough to give good selectivity but short
+        enough to save space. The prefix should be long enough to make the index nearly as
+        useful as it would be if you’d indexed the whole column. In other words, you’d like the
+        prefix’s cardinality to be close to the full column’s cardinality.
+
+        We can choose prefix char number by comparing selectivity of full column vs its prefix
+        the near selectivity means better performance
+
+        `ALTER TABLE sakila.city_demo ADD KEY (city(7))`; - prefix = 7
+        Why 7? Calculation demonstrates that first 7 chars of world cities are nearer to full 
+        city names
+
+        Prefix indexes cant be used in group by, order by, or as covering index
+
+    Covering Indexes:
+        A common suggestion is to create indexes for the query’s WHERE clause, but that’s only
+        part of the story. Indexes need to be designed for the whole query, not just the WHERE
+        clause. Indexes are indeed a way to find rows efficiently, but MySQL can also use an
+        index to retrieve a column’s data, so it doesn’t have to read the row at all. After all, the
+        index’s leaf nodes contain the values they index; why read the row when reading the
+        index can give you the data you want? An index that contains (or “covers”) all the
+        data needed to satisfy a query is called a covering index. It is important to note that
+        only B-tree indexes can be used to cover indexes.
+Index Features:
+    - Adaptive hash index. 
+        The InnoDB storage engine has a special feature called adaptive
+        hash indexes. When InnoDB notices that some index values are being accessed very
+        frequently, it builds a hash index for them in memory on top of B-tree indexes. This
+        gives its B-tree indexes some properties of hash indexes, such as very fast hashed
+        lookups. This process is completely automatic, and you can’t control or configure it,
+        although you can disable the adaptive hash index altogether.
+
+    - Clustered indexes (PK)
+        aren’t a separate type of index. Rather, they’re an approach to data
+        storage. The exact details vary among implementations, but InnoDB’s clustered
+        indexes actually store a B-tree index and the rows together in the same structure.
+
+    - Page merging / splitting  (arch in tablespace) - https://www.percona.com/blog/innodb-page-merging-and-page-splitting/
+
+Choosing right index (3-stars):
+    The index earns one star if it places relevant rows
+    adjacent to each other, a second star if its rows are sorted in the order the query
+    needs, and a final star if it contains all the columns needed for the query. We’ll return
+    to these principles throughout this chapter.
+
+Benefits of Indexes
+    • Indexes reduce the amount of data the server has to examine.
+    • Indexes help the server avoid sorting and temporary tables.
+    • Indexes turn random I/O into sequential I/O.
+
+Multi Column Indexing:
+    Multicolumn indexes are often very poorly understood. Common mistakes are to
+    index many or all of the columns separately or to index columns in the wrong order.
+    
+    >>>>>>    Distinct Key    <<<<<<<<
+    CREATE TABLE t (
+        c1 INT,
+        c2 INT,
+        c3 INT,
+        KEY(c1),
+        KEY(c2),
+        KEY(c3)
+    );
+    Individual indexes on lots of columns won’t help MySQL improve performance for
+    most queries. MySQL can cope a little with such poorly indexed tables when it
+    employs a strategy known as INDEX MERGE, which permits a query to make limited use
+    of multiple indexes from a single table to locate desired rows. It can use both indexes,
+    scanning them simultaneously and merging the results. There are three variations on
+    the algorithm: union for OR conditions, intersection for AND conditions, and unions of
+    intersections for combinations of the two. The following query uses a union of two
+    index scans, as you can see by examining the Extra column:
+    mysql> EXPLAIN SELECT film_id, actor_id FROM sakila.film_actor
+    -> WHERE actor_id = 1 OR film_id = 1\G
+    RESULT: .... Extra: Using union(PRIMARY,idx_fk_film_id);
+    ||
+    \/
+    The index merge strategy sometimes works very well, but more commonly it’s
+    actually an indication of a poorly indexed table:
+    • When the server intersects indexes (usually for AND conditions), it usually means
+        that you need a single index with all the relevant columns, not multiple indexes
+        that have to be combined.
+    • When the server unions indexes (usually for OR conditions), sometimes the algo‐
+        rithm’s buffering, sorting, and merging operations use lots of CPU and memory
+        resources. This is especially true if not all of the indexes are very selective, so the
+        scans return lots of rows to the merge operation.
+    •   Recall that the optimizer doesn’t account for this cost—it optimizes just the num‐
+        ber of random page reads. This can make it “underprice” the query, which might
+        in fact run more slowly than a plain table scan. The intensive memory and CPU
+        usage also tends to affect concurrent queries, but you won’t see this effect when
+        you run the query in isolation. Sometimes rewriting such queries with a UNION
+        clause is more optimal.
+    
+    !!!!!!
+    When you see an index merge in EXPLAIN, you should examine the query and table
+    structure to see if this is really the best you can get. You can disable index merges with
+    the optimizer_switch option or variable. You can also use IGNORE INDEX.
+
+    >>>>>>    Key Column Ordering    <<<<<<<<
+
+
+""""""""""
+
+
+
+
+
+
+
+
+
+------------------------------------CPU, RAM, I/O, OS--------------------------------------------
+
+Many writes, one flush
+    A single piece of data can be changed many times in memory without all of the
+    new values being written to disk. When the data is eventually flushed to disk, all
+    the modifications that happened since the last physical write are permanent. For
+    example, many statements could update an in-memory counter. If the counter is
+    incremented one hundred times and then written to disk, one hundred modifica‐
+    tions have been grouped into one write.
+I/O merging
+    Many different pieces of data can be modified in memory, and the modifications
+    can be collected together, so the physical writes can be performed as a single disk
+    operation.
+
+>>>>>>>>>>>>>>>>>>SSD:
+Solid-state storage devices use nonvolatile flash memory chips composed of cells
+instead of magnetic platters. They’re also called nonvolatile random access memory
+(NVRAM). They have no moving parts, which makes them behave very differently
+than hard drives.
+
+Write operation is pretty complex in SSD. Before writing Erase operation will be 
+performed in a block. Usually Erasing process takes more time than writing data
+to ready block. That is why when SSD is full, it slows down because of no enough 
+space for GARBAGE COLLECTION
+
+Garbage collection is important to understand. To keep some blocks fresh and ready
+for new writes, the device reclaims blocks. This requires some free space on the
+device. Either the device will have some reserved space internally that you can’t see or
+you will need to reserve space yourself by not filling it up all the way; this varies from
+device to device. Either way, as the device fills up, the garbage collector has to work
+harder to keep some blocks clean, so the write amplification factor increases.
+
+Write amplification (WAF) in SSDs refers to the phenomenon where more data is written to the NAND
+flash memory cells than what the host system intended to write. SSDs use a process called 
+wear leveling to distribute write and erase cycles evenly across the NAND flash memory cells 
+to prolong the lifespan of the drive. When data is written to an SSD, the drive typically 
+writes data in larger blocks than what the host system requested. This is because SSDs 
+cannot modify data directly in the same way as traditional hard disk drives (HDDs), but 
+rather they must erase entire blocks of data before writing new data to them. As a result, 
+when the host system requests a small amount of data to be written, the SSD may need to 
+read a larger block of data
+
+
+
+
+
+
+
+
+
+
+
+-------------------------------------------------------------------------------------------------
+
+good scripts & terms:
+    EXPLAIN SELECT *                 - shows execution plan (cost, rows, etc)
+    EXPLAIN ANALYZE SELECT * ....    - optimized variant of above (+ time on each step, loops, etc)
+    mysql> SOURCE <sql file path>    - executes sql file
+    merge merging / splitting        - https://www.percona.com/blog/innodb-page-merging-and-page-splitting/
+    OPTIMIZE TABLE                   - reorganize pages / records
+    surrogate key - is a primary key whose value is not derived from your
+        application’s data. The easiest way to do this is usually with an AUTO_INCREMENT
+    CHECK TABLE                      - to see if the table is corrupt.
+    (non-)volatile                   - When power is off, memory is (not) off like RAM
+    RAID                             - additional disk hardwares for failure tolerance (https://www.youtube.com/watch?v=U-OCdTeZLac)
+    Parity (RAID 5)                  - compress data by its binary blocks into one block https://youtu.be/nxkXNZlJDJc?si=lDYCZePpfvO-3zxQ&t=1600
+
+Problem
+    You want to copy a table or tables, either among the databases managed by a MySQL server or
+    from one server to another.
+Solution
+    Use the mysqldump program.
+Discussion
+    The mysqldump program makes a backup file that can be reloaded to recreate the original table or tables:
+    $ mysqldump cookbook mail > mail.sql
+
+
+Problem
+    You want to copy an InnoDB table, but the table is too big, and dumping
+    data from it in human-readable format takes long a time. Reload is not fast
+    either.
+Solution
+    Use transportable tablespaces.
+
+Problem
+    You want to copy a large MyISAM table on MySQL 8.0.
+Solution
+    Use the IMPORT TABLE command
+
+------------------------------------------------------Setting Conf----------------------------------------------
+If you don’t know which files your server reads, you can
+ask it:
+$ which mysqld
+/usr/sbin/mysqld
+$ /usr/sbin/mysqld --verbose --help | grep -A 1 'Default options'
+Default options are read from the following files in the given order:
+/etc/mysql/my.cnf ~/.my.cnf /usr/etc/my.cnf
+
+Configuration settings can have several scopes. Some settings are server-wide (global
+scope), others are different for each connection (session scope), and others are perobject.
+In addition to setting variables in the configuration files, you can change many (but
+not all) of them while the server is running. MySQL refers to these as dynamic config‐
+uration variables. The following statements show different ways to change the session
+and global values of sort_buffer_size dynamically:
+SET sort_buffer_size = <value>;
+SET GLOBAL sort_buffer_size = <value>;
+SET @@sort_buffer_size := <value>;
+SET @@session.sort_buffer_size := <value>;
+SET @@global.sort_buffer_size := <value>; (dynamic setting are volatile of Mysql server)
+
+Dirty pages (in buffer pool)      - recently modified but has not been flushed to disk yet
+Dirty pages will cause slow shutting down of the server as the data in it should be written
+to datafiles. 
+SOLVE:
+    if you know shutting time in advance, decrease value of `innodb_max_dirty_pages_pct`
+    wait for the certain pages moved to disk and shut the server down
+
+You can see info about dirty pages from i`nnodb_buffer_pool_pages_dirty`
+When server wake up, it is called cold cache. But default conf options:
+`innodb_buffer_pool_dump_at_shut` and `innodb_buffer_pool_load_at_startup`
+work together to warm up the server. It takes time but faster than cold caches
+causes
+`thread_cache_size` - variable specifies the number of threads MySQL can keep in
+the cache. 
+To check whether the thread cache is large enough, watch the `Threads_created` status variable.
+
+
+>>>>>>>>>>>>>>>>>>>>>>>>>>>>. Transaction Logs
+InnoDB uses its log to reduce the cost of committing transactions. Instead of flushing
+the buffer pool to disk when each transaction commits, it logs the transactions 
+If something bad happens (such as a power failure),
+InnoDB can replay the log and recover the committed transactions.
+
+The overall logfile size is controlled by `innodb_log_file_size` and `innodb_ log_
+files_in_group`, and it’s very important for write performance.
+
+`innodb_flush_log_at_trx_commit`:
+    When you are considering about flushing logs to disk, you have to better of:
+    performance vs durability? D of ACID is durability..!
+
+    First of all bring the MySQL architecture in front of your eyes: there is Buffer Pool
+    which is dedicated place in memory that pools data from disk and pass it to CPU to process.
+    But in ACID operations, we also have additional buffer named 
