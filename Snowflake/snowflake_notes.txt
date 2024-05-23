@@ -69,7 +69,7 @@ Role
 User
 File format
 Stage -> @external (storage int with aws/azure/gcs) vs internal (table % /user # /named)
-Srorage Integration
+Storage Integration
 Share
 Task (ALTER RESUME/SUSPEND) (AFTER <task>) -> when, after, schedule
 Pipe -> SYSTEM$pipe_status (ALTER REFRESH)
@@ -82,7 +82,7 @@ tag
 Procedure
 Order
 SEQUENCE
-RESOURCE MONITOR (creadit quota)
+RESOURCE MONITOR (credit quota)
 
 
     Related Terms:
