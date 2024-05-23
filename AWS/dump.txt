@@ -39,3 +39,20 @@ cognito sync
 Instance store type
 
 pupple boy
+xray 38
+SQS
+ECS
+
+66 B             true: 9 false: 4
+67 DE
+68 C
+69 B
+70 D
+71 A
+72 AC   DE
+73 A
+74 C
+75 B
+76 C   D
+77 C
+78 D   C

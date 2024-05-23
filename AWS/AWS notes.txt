@@ -1437,7 +1437,7 @@ ECS with X-RAY
         10 instance 10 daemon container
 
         As coder, we first define daemon container (2000 port on udp) ->
-        and we define app container and declare env variable "AWS_XRAY_ADDRESS"
+        and we define app container and declare env variable "AWS_XRAY_DAEMON_ADDRESS"
                                                 and value is the daemon name
         and link with the daemon container by assigning the name in "links" list
     
@@ -2090,7 +2090,7 @@ Indexes - LSI and GLI
         Alternative to Primary key (You can define Partition Key and Sort Key (optional))
         Can be created after table creation
         Have separated throughput capacity
-        If GSI throttle ,base table also throttle
+        If GSI throttle, base table also throttle
 
 Optimistic Locking
     To prevent conflicts of updates
@@ -3522,3 +3522,8 @@ DynamoDB:
         both method save the data in S3 bucket, HOWEVER you don't have access for the buckets
         you cannot contact with them. If you want to backup data for the bucket which you can interact with 
         you can use Datapipeline, EMR or Glue - ETL tools 
+
+Monitoring:
+    CloudTrail:
+        S3 bucket owner can get access logs when he is also object owner or has permission defined in object ACL
+        

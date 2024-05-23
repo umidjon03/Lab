@@ -1,0 +1,15 @@
+5v in big data processing:
+    Volume   - data volume (size, etc)
+    Velocity - speed of data processing (real time, near real-time)
+    Variety  - difference data types, sources, etc
+    Veracity - trustworthiness of the data
+    Value    - what we get from the data as a value in business
+
+
+Data Ingestion:
+    Homogeneous   - Data should be stored as it was in the source (blob objects, etc)
+    Heterogeneous - Data should be transformed by dedicated engines before loading to destination
+
+    Replayability - to process or replay data from a specific point in tim:
+    Stateful      - track all past actions in a base like user sessions, so next time no need to add certain info in request as it is being stored server or db
+    Stateless     - do not track past action data, every request should contain necessary info/data
